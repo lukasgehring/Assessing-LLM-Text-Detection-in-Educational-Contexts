@@ -1,0 +1,1 @@
+python main.py --output_name main --base_model_name gpt2-xl --mask_filling_model_name t5-small --n_perturbation_list 10 --n_samples 2 --pct_words_masked 0.3 --span_length 2 --batch_size 1 --skip_baseline --cache_dir ../../.resources --dataset brat-llama-3.3-70b
