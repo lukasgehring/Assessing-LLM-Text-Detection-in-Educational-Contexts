@@ -1,0 +1,15 @@
+{
+    "info": {
+        "model": "meta-llama/Meta-Llama-3.1-70B-Instruct",
+        "dataset": "brat-project",
+        "batch_size": 8,
+        "temperature": 1,
+        "do_sample": false,
+        "max_new_tokens": 512,
+        "job_id": "132909",
+        "instruction": "You are a student writing an essay on a given topic. Write around 300 words.",
+        "disable_log_file": false,
+        "prompt_mode": "summary",
+        "summary_file": "human_summaries_t5-3b"
+    }
+}

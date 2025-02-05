@@ -2,5 +2,16 @@
 __pycache__/
 
 .resources/
+results/
 
 *.csv
+
+*.sbatch
+*.sh
+*.pkl
+test.py
+*.pdf
+
+pdfs/
+logs/
+scripts/

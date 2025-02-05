@@ -1,0 +1,10 @@
+{
+    "info": {
+        "model": "meta-llama/Meta-Llama-3.1-70B-Instruct",
+        "dataset": "brat-project",
+        "batch_size": 8,
+        "temperature": 1,
+        "do_sample": false,
+        "max_new_tokens": 512
+    }
+}

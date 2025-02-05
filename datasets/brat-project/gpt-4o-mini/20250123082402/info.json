@@ -1,0 +1,10 @@
+{
+    "info": {
+        "model": "gpt-4o-mini",
+        "dataset": "brat-project",
+        "temperature": 0.7,
+        "max_new_tokens": 512,
+        "job_id": "20250123082402",
+        "instruction": "You are a student writing an essay on a given topic. Write around 300 words."
+    }
+}
