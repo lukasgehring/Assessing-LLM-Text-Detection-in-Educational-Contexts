@@ -4,12 +4,21 @@
         "dataset": "brat-project",
         "batch_size": 8,
         "temperature": 1,
-        "do_sample": false,
         "max_new_tokens": 512,
         "job_id": "132912",
         "instruction": "You are a student writing an essay on a given topic. Write around 300 words.",
         "disable_log_file": false,
         "prompt_mode": "summary",
         "summary_file": "human_summaries_t5-3b"
+    },
+    "attack": null,
+    "prompt": {
+        "user": "You are a student writing an essay on a given topic. Write around 300 words.",
+        "system": "Write an essay with the following information: competition can effectively promote the development of economy . however, when we discuss about the issue of competition or cooperation, what we are concerned about is not the whole society . through cooperation, children can learn about interpersonal skills which are significant in the future life of all students ."
+    },
+    "data_hashes": {
+        "question_hash": "cc218bf569cfa95d2d45f8b07dd7e03ff1beb98a91f109bb71570ff54cf7098a",
+        "human_hash": "6ad35e83dbff240023d3e1423212d38f5664acbcec981538af53671e9b13167e",
+        "llm_hash": "15e9fa482a302d4a05cba44ad7ba92301d449060743df96db05856eb9d07c488"
     }
 }

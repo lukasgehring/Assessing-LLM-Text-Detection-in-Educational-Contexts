@@ -12,8 +12,9 @@ def tokenize_and_mask(text, span_length, pct, args):
     n_spans = int(n_spans)
 
     # Added to prevent infinite regeneration loop
-    if n_spans > 28:
-        n_spans = 28
+    # TODO: Model have problems when using more than 27 spans! See this issue: https://github.com/huggingface/transformers/issues/8842
+    if n_spans > 27:
+        n_spans = 27
 
     n_masks = 0
     while n_masks < n_spans:
@@ -49,10 +50,10 @@ def replace_masks(mask_tokenizer, mask_model, texts, args):
     outputs = mask_model.generate(**tokens, max_length=150, do_sample=True, top_p=args.mask_top_p, num_return_sequences=1, eos_token_id=stop_id)
 
     # set stop token if model execute with </s>
-    ids = (outputs == stop_id).any(dim=1).flatten()
-    if not ids.all():
-        idx = (outputs[(~ids).nonzero()] == 1).nonzero()[0]
-        outputs[(~ids).nonzero(),idx] = stop_id
+    #ids = (outputs == stop_id).any(dim=1).flatten()
+    #if not ids.all():
+    #    idx = (outputs[(~ids).nonzero()] == 1).nonzero()[0]
+    #    outputs[(~ids).nonzero(),idx] = stop_id
     return mask_tokenizer.batch_decode(outputs, skip_special_tokens=False)
 
 # Modified code from: DetectGPT

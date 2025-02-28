@@ -1,16 +1,24 @@
 import argparse
-import json
+import hashlib
+import os
 import sys
-import time
 from datetime import datetime
+from typing import List
 
 import torch
+from loguru import logger
 
+
+def add_data_hash_to_args(args: argparse.Namespace, human_data: List[str], llm_data: List [str]):
+    args.human_data_hash = hashlib.sha256(";".join(human_data).encode()).hexdigest()
+    args.llm_data_hash = hashlib.sha256(";".join(llm_data).encode()).hexdigest()
+
+    logger.info(f"Human data hash: {args.human_data_hash} | LLM data hash: {args.llm_data_hash}")
 
 def init_parser():
     parser = argparse.ArgumentParser(prog='BenchEduLLMDetect')
     parser.add_argument('--models', nargs='+', default=["detect-gpt", "detect-llm", "intrinsic-dim", "ghostbuster"], help="detector-models")
-    parser.add_argument('--dataset', default="brat-project/meta-llama-3.1-70b-instruct/129954", help="dataset path")
+    parser.add_argument('--dataset', default="brat-project/llama-3.3-70b-instruct/131538", help="dataset path")
     parser.add_argument('--device', default="cuda", help="dataset")
     parser.add_argument('--n_samples', default=5, type=int, help="Number of samples")
     parser.add_argument('--chunk_size', default=20, type=int, help="Chunk size") #  TODO: Maybe combine with batch_size?
@@ -20,10 +28,17 @@ def init_parser():
     parser.add_argument('--max_num_attempts', type=int, default=20, help="Number of rewriting attempts")
     parser.add_argument('--disable_log_file', action='store_true')
     parser.add_argument("--openai_key", type=str, default="")
+    parser.add_argument("--seed", type=int, default=42)
 
     # dataset restrictions
     parser.add_argument("--max_words", type=int, default=None)
     parser.add_argument("--cut_sentences", action='store_true')
+
+    # detector cache
+    parser.add_argument('--use_detector_cache', action='store_true')
+
+    # roberta
+    parser.add_argument('--checkpoint', default=None, type=str, help="Checkpoint path for pretrained RoBERTa model")
 
 
     # TODO: Maybe fix the following arguments?
@@ -35,6 +50,12 @@ def init_parser():
 
     args = parser.parse_args()
 
+    if "roberta" in args.models:
+        if args.checkpoint is None:
+            sys.exit("Please provide a checkpoint path for RoBERTa model!")
+        if not os.path.exists(args.checkpoint):
+            sys.exit(f"RoBERTa model checkpoint path {args.checkpoint} does not exist!")
+
     args.start_at = datetime.now()
 
     if args.device != "cpu":
@@ -44,5 +65,3 @@ def init_parser():
             args.device = "cpu"
 
     return args
-
-

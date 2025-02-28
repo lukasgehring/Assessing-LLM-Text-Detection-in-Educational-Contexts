@@ -1,5 +1,6 @@
 import gzip
 import os
+import sys
 import time
 
 import nltk
@@ -14,6 +15,8 @@ from tqdm import tqdm
 from detectors.evaluate import run_perturbation_experiment
 from detectors.ghostbuster.utils.featurize import t_featurize_logprobs, score_ngram
 from detectors.ghostbuster.utils.symbolic import train_trigram, get_words, vec_functions, scalar_functions
+from utils.args import add_data_hash_to_args
+from utils.load_data import load_cached_data
 from utils.save_data import save_results
 
 
@@ -88,6 +91,8 @@ def run(data, args):
     human = data['human'][:args.n_samples]
     llm = data['llm'][:args.n_samples]
 
+    add_data_hash_to_args(args=args, human_data=human, llm_data=llm)
+
     best_features = open("detectors/ghostbuster/model/features.txt").read().strip().split("\n")
 
     # Load davinci tokenizer
@@ -103,35 +108,56 @@ def run(data, args):
 
     trigram_model = train_trigram()
 
-    logger.debug(f"Compute predictions of the human-written texts.")
-    start = time.time()
-    human_predictions = get_predictions(
-        data=human,
-        enc=enc,
-        best_features=best_features,
-        model=model,
-        mu=mu,
-        sigma=sigma,
-        trigram_model=trigram_model,
-        args=args
-    )
-    logger.info(f"Finished computation of {len(human_predictions)} human-written texts. ({time.time() - start:.2f}s)")
+    key_list = ['cut_sentences', 'dataset', 'max_words', 'seed']
 
-    logger.debug(f"Compute predictions of the LLM-generated texts.")
-    start = time.time()
-    llm_predictions = get_predictions(
-        data=llm,
-        enc=enc,
-        best_features=best_features,
-        model=model,
-        mu=mu,
-        sigma=sigma,
-        trigram_model=trigram_model,
-        args=args
-    )
-    logger.info(f"Finished computation of {len(human_predictions)} LLM-generated texts. ({time.time() - start:.2f}s)")
+    if args.use_detector_cache:
+        cached_human_data = load_cached_data(args, model="Ghostbuster", key_list=key_list, is_human=True)
+        cached_llm_data = load_cached_data(args, model="Ghostbuster", key_list=key_list, is_human=False)
+    else:
+        cached_human_data = None
+        cached_llm_data = None
 
-    predictions = {'human': human_predictions.tolist(), 'llm': llm_predictions.tolist()}
+    if cached_human_data is not None and cached_llm_data is not None:
+        logger.warning("Experiment stopped! Experiment with the same configuration was done before. Delete the old experiment or change arguments!")
+        sys.exit(0)
+
+    if cached_human_data is None:
+        logger.debug(f"Compute predictions of the human-written texts.")
+        start = time.time()
+        human_predictions = get_predictions(
+            data=human,
+            enc=enc,
+            best_features=best_features,
+            model=model,
+            mu=mu,
+            sigma=sigma,
+            trigram_model=trigram_model,
+            args=args
+        )
+        logger.info(f"Finished computation of {len(human_predictions)} human-written texts. ({time.time() - start:.2f}s)")
+        human_predictions = human_predictions.tolist()
+    else:
+        human_predictions = cached_human_data["predictions"]["human"]
+
+    if cached_llm_data is None:
+        logger.debug(f"Compute predictions of the LLM-generated texts.")
+        start = time.time()
+        llm_predictions = get_predictions(
+            data=llm,
+            enc=enc,
+            best_features=best_features,
+            model=model,
+            mu=mu,
+            sigma=sigma,
+            trigram_model=trigram_model,
+            args=args
+        )
+        logger.info(f"Finished computation of {len(human_predictions)} LLM-generated texts. ({time.time() - start:.2f}s)")
+        llm_predictions = llm_predictions.tolist()
+    else:
+        llm_predictions = cached_llm_data["predictions"]["llm"]
+
+    predictions = {'human': human_predictions, 'llm': llm_predictions}
 
     output = run_perturbation_experiment(
         results=None,

@@ -1,10 +1,16 @@
 .idea/
 __pycache__/
 
-.resources/
-results/
+diagrams/
 
-*.csv
+.resources/
+.cache/
+results/
+results_expired/
+logs_expired/
+checkpoints/
+
+*.ipynb
 
 *.sbatch
 *.sh

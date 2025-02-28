@@ -160,7 +160,7 @@ def run(data, args):
     human = data["human"][:args.n_samples]
     llm = data["llm"][:args.n_samples]
 
-    model, tokenizer = hf_load_pretrained_llm('roberta-base', model_class=RobertaModel, tokenizer_class=RobertaTokenizer, device_map="cpu")
+    model, tokenizer = hf_load_pretrained_llm('roberta-base', model_class=RobertaModel, tokenizer_class=RobertaTokenizer, device_map="cpu", cache_dir=args.cache_dir)
 
     # model_to_device(model, args)
 

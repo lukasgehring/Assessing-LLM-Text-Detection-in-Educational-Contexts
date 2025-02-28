@@ -33,4 +33,9 @@ def preprocess_data(data, mask_tokenizer, args):
 
     logger.info(f"Prepared data with {len(original[:args.n_samples])} human-written and llm-generated texts, with a maximum of 512 tokens according to mask_tokenizer.")
 
+    args.indices = args.indices[mask]
+    args.indices = args.indices[:args.n_samples]
+
+    logger.info(f"Updated indices: {args.indices.values.tolist()}")
+
     return {'original': original[:args.n_samples], 'sampled': generated[:args.n_samples]}

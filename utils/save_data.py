@@ -11,8 +11,16 @@ def create_info(args, path, model):
     arg_dict = vars(args).copy()
     infos = {'model': model}
 
+    infos['input_hashes'] = {
+        'human_hash': arg_dict.pop("human_data_hash"),
+        'llm_hash': arg_dict.pop("llm_data_hash"),
+    }
+
     if "openai_key" in arg_dict.keys():
         arg_dict.pop("openai_key")
+
+    if "indices" in arg_dict.keys():
+        arg_dict.pop("indices")
 
     if "start_at" in arg_dict.keys():
         start_at = arg_dict.pop("start_at")

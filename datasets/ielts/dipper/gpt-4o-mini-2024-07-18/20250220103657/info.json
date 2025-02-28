@@ -1,0 +1,24 @@
+{
+    "info": {
+        "model": "gpt-4o-mini-2024-07-18",
+        "dataset": "ielts",
+        "batch_size": 8,
+        "temperature": 1,
+        "max_new_tokens": 512,
+        "job_id": "20250220103657",
+        "instruction": "You are a student writing an essay on a given topic. Write around 300 words.",
+        "disable_log_file": false,
+        "prompt_mode": "task",
+        "summary_file": "human_summaries_t5-3b"
+    },
+    "attack": "dipper",
+    "prompt": {
+        "system": "You are a student writing an essay on a given topic. Write around 300 words.",
+        "user": "Write an essay for this task: A country becomes more interesting and develops more quickly when its population includes a mixture of nationalities.To what extent do you agree or disagree?Give reasons for your answer and include any relevant examples from your own knowledge or experience."
+    },
+    "data_hashes": {
+        "question_hash": "dd1e0c791ac83e3eaed5423799068d4272d8fff0da889dfe9164fbb86e4af500",
+        "human_hash": "e41009170f923aba095374f3cc5696e2edacecdd64f9e0f83dcabeffe4378eaa",
+        "llm_hash": "a2fae269e0f6daf2789627e035a24362f6ea98474ad2d51dd2efb3607694333c"
+    }
+}

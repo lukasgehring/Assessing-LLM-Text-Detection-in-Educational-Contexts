@@ -4,6 +4,7 @@ import torch
 from loguru import logger
 
 from detectors import intrinsic_dim
+from detectors.RoBERTa import roberta
 from detectors.detect_gpt_based_detectors import detect_gpt_based
 from detectors.ghostbuster import ghostbuster
 from utils.args import init_parser
@@ -15,7 +16,7 @@ from utils.seeds import set_seeds
 def run(args):
 
     # remove this line, if you want to execute without a seed
-    set_seeds(42)
+    set_seeds(args.seed)
 
     # loading data (questions, human-written and llm-generated texts)
     data = load_data(args)
@@ -38,6 +39,11 @@ def run(args):
             args.start_timestamp = time.time()
             ghostbuster.run(data, args)
 
+        if model == "roberta":
+            logger.info("Executing RoBERTa model")
+            args.start_timestamp = time.time()
+            roberta.run(data, args)
+
     # execute detectors (inference and evaluation)
     if len(detect_gpt_based_models) > 0:
         start = time.time()
@@ -55,7 +61,7 @@ if __name__ == "__main__":
     args = init_parser()
 
     # init loguru logger
-    args.job_id = init_logger(disable_log_file=args.disable_log_file)
+    args.job_id = init_logger(args=args)
 
     log_resources()
     logger.info(f"Run using the following arguments: {vars(args)}")

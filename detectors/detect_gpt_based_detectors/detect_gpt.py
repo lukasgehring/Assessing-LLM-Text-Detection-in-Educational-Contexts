@@ -1,6 +1,3 @@
-import gzip
-import os
-import pickle
 import time
 
 import numpy as np
@@ -18,16 +15,22 @@ def get_perturbation_results(results, base_model, base_tokenizer, args):
     logger.debug(f"Computing log likelihoods...")
     start = time.time()
     for res in tqdm(results, desc="Computing log likelihoods"):
-        p_sampled_ll = get_lls(res["perturbed_sampled"], base_model=base_model, base_tokenizer=base_tokenizer, args=args)
-        p_original_ll = get_lls(res["perturbed_original"], base_model=base_model, base_tokenizer=base_tokenizer, args=args)
-        res["original_ll"] = get_ll(res["original"], base_model=base_model, base_tokenizer=base_tokenizer, args=args)
-        res["sampled_ll"] = get_ll(res["sampled"], base_model=base_model, base_tokenizer=base_tokenizer, args=args)
-        res["all_perturbed_sampled_ll"] = p_sampled_ll
-        res["all_perturbed_original_ll"] = p_original_ll
-        res["perturbed_sampled_ll"] = np.mean(p_sampled_ll)
-        res["perturbed_original_ll"] = np.mean(p_original_ll)
-        res["perturbed_sampled_ll_std"] = np.std(p_sampled_ll) if len(p_sampled_ll) > 1 else 1
-        res["perturbed_original_ll_std"] = np.std(p_original_ll) if len(p_original_ll) > 1 else 1
+
+        # if data not cached, compute human results
+        if "original_ll" not in res.keys():
+            p_original_ll = get_lls(res["perturbed_original"], base_model=base_model, base_tokenizer=base_tokenizer, args=args)
+            res["original_ll"] = get_ll(res["original"], base_model=base_model, base_tokenizer=base_tokenizer, args=args)
+            res["all_perturbed_original_ll"] = p_original_ll
+            res["perturbed_original_ll"] = np.mean(p_original_ll)
+            res["perturbed_original_ll_std"] = np.std(p_original_ll) if len(p_original_ll) > 1 else 1
+
+        # if data not cached, compute llm results
+        if "sampled_ll" not in res.keys():
+            p_sampled_ll = get_lls(res["perturbed_sampled"], base_model=base_model, base_tokenizer=base_tokenizer, args=args)
+            res["sampled_ll"] = get_ll(res["sampled"], base_model=base_model, base_tokenizer=base_tokenizer, args=args)
+            res["all_perturbed_sampled_ll"] = p_sampled_ll
+            res["perturbed_sampled_ll"] = np.mean(p_sampled_ll)
+            res["perturbed_sampled_ll_std"] = np.std(p_sampled_ll) if len(p_sampled_ll) > 1 else 1
 
     logger.info(f"Computed log likelihoods. ({time.time() - start:.2f}s)")
 
