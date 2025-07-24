@@ -1,82 +1,157 @@
-import sys
-from typing import List, Tuple, Optional
+import nltk
+import textstat
 
-import numpy as np
-import pandas as pd
-from loguru import logger
-from numpy import ndarray
 from pandas import DataFrame
-from sklearn.metrics import roc_curve, confusion_matrix, auc
-from tqdm import tqdm
-
-from evaluation.utils import combine_info_and_metrics
-
-
-def get_accuracy(true_positives: ndarray, true_negatives: ndarray, false_positives: ndarray, false_negatives: ndarray) -> ndarray:
-    return (true_negatives + true_positives) / (true_positives + true_negatives + false_positives + false_negatives)
+from sklearn.datasets import make_classification
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics import roc_curve, auc
+from sklearn.metrics.pairwise import cosine_similarity
 
 
-def get_precision(true_positives: ndarray, false_positives: ndarray, _epsilon: float = 1e-7) -> ndarray:
-    return true_positives / (true_positives + false_positives + _epsilon)
+def statistical_analysis(corpus: DataFrame, column: str = "text") -> DataFrame:
+    """
+    Compute statistical analysis metrics for a text corpus. The metrics include: 'word_count', 'sentence_count', 'avg_sentence_length', 'unique_word_count', 'lexical_diversity' and 'flesch_reading_ease'.
+
+    :param corpus: Text corpus.
+    :param column: Column name of the text corpus.
+
+    :return: DataFrame with computed statistical analysis metrics.
+    """
+    corpus = apply_avg_sentence_length(corpus, column=column, drop_intermediate=False)
+    corpus = apply_lexical_diversity(corpus, column=column, drop_intermediate=False)
+    corpus = apply_flesch_reading_ease(corpus, column=column)
+
+    return corpus
 
 
-def get_recall(true_positives: ndarray, false_negatives: ndarray, _epsilon: float = 1e-7) -> ndarray:
-    return true_positives / (true_positives + false_negatives + _epsilon)
+def apply_word_count(corpus: DataFrame, column: str = "text") -> DataFrame:
+    """
+    Compute word count metric for a text corpus.
+
+    :param corpus: Text corpus.
+    :param column: Column name of the text corpus.
+    :return: DataFrame with computed word count metric 'word_count'.
+    """
+    corpus['word_count'] = corpus[column].apply(lambda x: len(nltk.word_tokenize(x)))
+    return corpus
 
 
-def get_f1_score(precision: ndarray, recall: ndarray, _epsilon: float = 1e-7) -> ndarray:
-    return 2 * (precision * recall) / (precision + recall + _epsilon)
+def apply_sentence_count(corpus: DataFrame, column: str = "text") -> DataFrame:
+    """
+    Compute sentence count metric for a text corpus.
+
+    :param corpus: Text corpus.
+    :param column: Column name of the text corpus.
+    :return: DataFrame with computed sentence count metric 'sentence_count'.
+    """
+    corpus['sentence_count'] = corpus[column].apply(lambda x: len(nltk.sent_tokenize(x)))
+    return corpus
 
 
-def compute_metrics(info_result_list: List[Tuple[dict, dict]]) -> Optional[DataFrame]:
-    df = None
+def apply_avg_sentence_length(corpus: DataFrame, column: str = "text", drop_intermediate: bool = True) -> DataFrame:
+    """
+    Compute average sentence length metric for a text corpus.
 
-    for info, result in tqdm(info_result_list, desc="Computing metrics"):
-        # setup y_true (0 = human, 1 = LLM) and y_scores [2 * num_samples]
-        y_true = [0] * len(result['predictions']['human']) + [1] * len(result['predictions']['llm'])
-        y_scores = result['predictions']['human'] + result['predictions']['llm']
+    :param corpus: Text corpus.
+    :param column: Column name of the text corpus.
+    :param drop_intermediate: If `True`, intermediate metrics added for computation are dropped.
+    :return: DataFrame with computed average sentence length metric 'avg_sentence_length'.
+    """
+    drop_columns = []
 
-        # computing fpr and tpr for every threshold
-        false_positive_rate, true_positive_rate, thresholds = roc_curve(y_true, y_scores, drop_intermediate=False)
+    if 'word_count' not in corpus.columns:
+        drop_columns.append('word_count')
+        corpus = apply_word_count(corpus, column=column)
 
-        num_thresholds = len(thresholds)
+    if 'sentence_count' not in corpus.columns:
+        drop_columns.append('sentence_count')
+        corpus = apply_sentence_count(corpus, column=column)
 
-        true_positives = np.zeros(num_thresholds)
-        false_negatives = np.zeros(num_thresholds)
-        false_positives = np.zeros(num_thresholds)
-        true_negatives = np.zeros(num_thresholds)
+    corpus['avg_sentence_length'] = corpus['word_count'] / corpus['sentence_count']
 
-        # computing confusion matrix for each possible threshold
-        for i, threshold in enumerate(thresholds):
-            y_pred = [1 if score >= threshold else 0 for score in y_scores]
-            true_negative, false_positive, false_negative, true_positive = confusion_matrix(y_true, y_pred).ravel()
+    if drop_intermediate and drop_columns:
+        corpus = corpus.drop(columns=drop_columns)
 
-            true_positives[i] = true_positive
-            false_negatives[i] = false_negative
-            false_positives[i] = false_positive
-            true_negatives[i] = true_negative
+    return corpus
 
-        # computing additional metrics
-        precision = get_precision(true_positives=true_positives, false_positives=false_positives)
-        recall = get_recall(true_positives=true_positives, false_negatives=false_negatives)
 
-        # TODO: Add human and llm recall
-        metrics = {
-            'false_positive_rate': false_positive_rate,
-            'true_positive_rate': true_positive_rate,
-            'true_positive': true_positives,
-            'false_negative': false_negatives,
-            'false_positive': false_positives,
-            'true_negative': true_negatives,
-            'roc_auc': auc(false_positive_rate, true_positive_rate),
-            'accuracy': get_accuracy(true_positives=true_positives, true_negatives=true_negatives, false_positives=false_positives, false_negatives=false_negatives),
-            'precision': precision,
-            'recall': recall,
-            'f1_score': get_f1_score(precision=precision, recall=recall)
-        }
+def apply_unique_word_count(corpus: DataFrame, column: str = "text") -> DataFrame:
+    """
+    Compute unique word count metric for a text corpus.
 
-        df = pd.concat([df, combine_info_and_metrics(info, metrics)], ignore_index=True) if df is not None else combine_info_and_metrics(info, metrics)
+    :param corpus: Text corpus.
+    :param column: Column name of the text corpus.
+    :return: DataFrame with computed unique word count metric 'unique_word_count'.
+    """
+    corpus['unique_word_count'] = corpus[column].apply(lambda x: len(set(nltk.word_tokenize(x))))
+    return corpus
 
-    logger.info("Finished computing metrics.")
 
-    return df
+def apply_lexical_diversity(corpus: DataFrame, column: str = "text", drop_intermediate: bool = True) -> DataFrame:
+    """
+    Compute lexical diversity metric for a text corpus.
+
+    :param corpus: Text corpus.
+    :param column: Column name of the text corpus.
+    :param drop_intermediate: If `True`, intermediate metrics added for computation are dropped.
+    :return: DataFrame with computed lexical diversity metric 'lexical_diversity'.
+    """
+    drop_columns = []
+
+    if 'word_count' not in corpus.columns:
+        drop_columns.append('word_count')
+        corpus = apply_word_count(corpus, column=column)
+
+    if 'unique_word_count' not in corpus.columns:
+        drop_columns.append('unique_word_count')
+        corpus = apply_unique_word_count(corpus, column=column)
+
+    corpus['lexical_diversity'] = corpus['unique_word_count'] / corpus['word_count']
+
+    if drop_intermediate and drop_columns:
+        corpus = corpus.drop(columns=drop_columns)
+
+    return corpus
+
+
+def apply_flesch_reading_ease(corpus: DataFrame, column: str = "text") -> DataFrame:
+    """
+    Compute flesch-reading ease metric for a text corpus.
+
+    :param corpus: Text corpus.
+    :param column: Column name of the text corpus.
+    :return: DataFrame with computed flesch-reading ease metric 'flesch_reading_ease'.
+    """
+    corpus['flesch_reading_ease'] = corpus[column].apply(textstat.textstat.flesch_reading_ease)
+    return corpus
+
+
+def apply_cosine_similarity(corpus: DataFrame, x_column: str, y_column: str, vectorizer=TfidfVectorizer()) -> DataFrame:
+    """
+    Compute cosine similarity metric between two text corpora.
+
+    :param corpus: DataFrame with text corpora.
+    :param x_column: Column name of the first text corpus.
+    :param y_column: Column name of the second text corpus.
+    :param vectorizer: Vectorizer.
+
+    :return: DataFrame with computed cosine similarity metric 'cosine_similarity'.
+    """
+
+    def cosine_similarity_text(row):
+        vectorized = vectorizer.fit_transform([row[x_column], row[y_column]])
+        similarity = cosine_similarity(vectorized[0:1], vectorized[1:2])[0][0]
+        return similarity
+
+    corpus["cosine_similarity"] = corpus.apply(cosine_similarity_text, axis=1)
+    return corpus
+
+
+def get_roc_curve(df, drop_intermediate=True):
+    fpr, tpr, thresholds = roc_curve(~df['is_human'], df['prediction'], drop_intermediate=drop_intermediate)
+
+    # invert if auc is negative
+    if auc(fpr, tpr) < 0.5:
+        fpr, tpr, thresholds = roc_curve(df['is_human'], df['prediction'], drop_intermediate=drop_intermediate)
+
+    return fpr, tpr, thresholds

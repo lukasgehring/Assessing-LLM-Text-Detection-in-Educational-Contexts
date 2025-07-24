@@ -1,0 +1,56 @@
+{
+    "model": "RoBERTa",
+    "input_hashes": {
+        "human_hash": "bde5f22229a96fe7d17e58593e1d57ef9689fa03f2132f3cef18b61267cce20b",
+        "llm_hash": "d68a3e85591502eff7aabbf684af8083dba1d56b67c65c118a7e1852c2ecc7af"
+    },
+    "start_at": "2025-02-24 13:32:18.742620",
+    "duration": "6.59s",
+    "dataset": {
+        "info": {
+            "model": "gpt-4o-mini-2024-07-18",
+            "dataset": "brat-project",
+            "batch_size": 8,
+            "temperature": 1,
+            "max_new_tokens": 512,
+            "job_id": "20250206132923",
+            "instruction": "",
+            "disable_log_file": false,
+            "prompt_mode": "rewrite-131538",
+            "summary_file": "human_summaries_t5-3b"
+        },
+        "attack": null,
+        "prompt": {
+            "user": "Rewrite this text: The debate on whether children should be taught to compete or co-operate has sparked intense discussion among educators and parents. While some argue that teaching children to compete is essential for their future success, I firmly believe that teaching children to co-operate is more beneficial in making them useful adults.\n\nTeaching children to co-operate helps them develop essential social skills such as communication,ing,ing, empathy, and problem-solving. When children work together towards a common goal, they learn to appreciate each other's strengths and weaknesses, leading to a more harmonious and productive team. This, in turn, prepares them for the real world where collaboration and teamwork are highly valued. Moreover, co-operation fosters a sense of community and mutual respect, which is critical in building strong, lasting relationships.\n\nOn the other hand, teaching children to compete can lead to an overly individualistic mindset, where they prioritize their own success over others. This can result in an unhealthy obsession with winning, leading to stress, anxiety, and decreased self-esteem when they encounter setbacks. Furthermore, an overemphasis on competition can create a cutthroat environment where children feel pressured to succeed at all costs, undermining the value of fair play and sportsmanship.\n\nIn conclusion, while competition has its benefits, I believe that teaching children to co-operate is more beneficial in the long run. By learning to work together, share ideas, and support one another, children will develop into more well-rounded, empathetic, and productive adults. As they navigate the complexities of the real world, they will be better equipped to build strong relationships, work effectively in teams, and contribute positively to their communities. Ultimately, teaching children to co-operate is essential in raising a generation of compassionate, collaborative, and successful individuals."
+        },
+        "data_hashes": {
+            "question_hash": "bf1df95fd44e8a6335c4f4fae2b8a1aae914a2ee7163f95c00cef682feee2d6d",
+            "human_hash": "efbc1c5061c08d949660d5be8b2767e38a6936e7ac0836f698902a9cf41c2414",
+            "llm_hash": "8c45618db23d9fccb6caf7f3306847695e2bbaa8efa2c3320078cb70343f16b8"
+        }
+    },
+    "args": {
+        "models": [
+            "roberta"
+        ],
+        "device": "cuda:0",
+        "n_samples": 5,
+        "chunk_size": 20,
+        "base_model_name": "gpt2-xl",
+        "mask_filling_model_name": "t5-3b",
+        "cache_dir": ".resources",
+        "max_num_attempts": 20,
+        "disable_log_file": false,
+        "seed": 42,
+        "max_words": null,
+        "cut_sentences": false,
+        "use_detector_cache": false,
+        "checkpoint": "detectors/RoBERTa/checkpoints/ielts/llama-3.3-70b-instruct/135672/checkpoint-21",
+        "buffer_size": 1,
+        "mask_top_p": 1.0,
+        "pct_words_masked": 0.3,
+        "n_perturbation": 100,
+        "span_length": 2,
+        "job_id": "136720"
+    }
+}

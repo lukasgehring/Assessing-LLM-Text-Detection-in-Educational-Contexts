@@ -9,6 +9,7 @@ results/
 results_expired/
 logs_expired/
 checkpoints/
+evaluation_old/
 
 *.ipynb
 

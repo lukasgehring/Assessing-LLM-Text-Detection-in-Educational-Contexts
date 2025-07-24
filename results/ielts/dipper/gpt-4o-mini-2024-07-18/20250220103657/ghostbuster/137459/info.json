@@ -1,0 +1,58 @@
+{
+    "model": "Ghostbuster",
+    "input_hashes": {
+        "human_hash": "4a638a9642a80d9d46f193b5d2f9f47ef0eae7d934844fe13ef1d8529d203ba9",
+        "llm_hash": "f1e5fe31aad4af57ea471beb7ebb65f505fe5f8d9d5cbfb700b99657afa61342"
+    },
+    "start_at": "2025-02-26 14:55:27.205900",
+    "duration": "1218.63s",
+    "dataset": {
+        "info": {
+            "model": "gpt-4o-mini-2024-07-18",
+            "dataset": "ielts",
+            "batch_size": 8,
+            "temperature": 1,
+            "max_new_tokens": 512,
+            "job_id": "20250220103657",
+            "instruction": "You are a student writing an essay on a given topic. Write around 300 words.",
+            "disable_log_file": false,
+            "prompt_mode": "task",
+            "summary_file": "human_summaries_t5-3b"
+        },
+        "attack": "dipper",
+        "prompt": {
+            "system": "You are a student writing an essay on a given topic. Write around 300 words.",
+            "user": "Write an essay for this task: A country becomes more interesting and develops more quickly when its population includes a mixture of nationalities.To what extent do you agree or disagree?Give reasons for your answer and include any relevant examples from your own knowledge or experience."
+        },
+        "data_hashes": {
+            "question_hash": "dd1e0c791ac83e3eaed5423799068d4272d8fff0da889dfe9164fbb86e4af500",
+            "human_hash": "e41009170f923aba095374f3cc5696e2edacecdd64f9e0f83dcabeffe4378eaa",
+            "llm_hash": "a2fae269e0f6daf2789627e035a24362f6ea98474ad2d51dd2efb3607694333c"
+        }
+    },
+    "args": {
+        "models": [
+            "detect-gpt",
+            "ghostbuster"
+        ],
+        "device": "cuda:0",
+        "n_samples": 402,
+        "chunk_size": 50,
+        "base_model_name": "gpt2-xl",
+        "mask_filling_model_name": "t5-3b",
+        "cache_dir": "../resources",
+        "max_num_attempts": 20,
+        "disable_log_file": false,
+        "seed": 42,
+        "max_words": null,
+        "cut_sentences": false,
+        "use_detector_cache": true,
+        "checkpoint": null,
+        "buffer_size": 1,
+        "mask_top_p": 1.0,
+        "pct_words_masked": 0.3,
+        "n_perturbation": 100,
+        "span_length": 2,
+        "job_id": "137459"
+    }
+}

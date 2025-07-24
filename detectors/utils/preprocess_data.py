@@ -1,11 +1,13 @@
 from loguru import logger
 
+
 def strip_newlines(text):
     return ' '.join(text.split())
 
+
 def preprocess_data(data, mask_tokenizer, args):
-    original = data["human"]
-    generated = data["llm"]
+    original = data[data["is_human"] == 1]["answer"]
+    generated = data[data["is_human"] == 0]["answer"]
 
     # remove whitespaces
     logger.debug("Strip whitespaces and newlines from human-written and llm-generated texts...")
@@ -31,11 +33,12 @@ def preprocess_data(data, mask_tokenizer, args):
     original = [value for i, value in enumerate(original) if mask[i]]
     generated = [value for i, value in enumerate(generated) if mask[i]]
 
-    logger.info(f"Prepared data with {len(original[:args.n_samples])} human-written and llm-generated texts, with a maximum of 512 tokens according to mask_tokenizer.")
+    logger.info(
+        f"Prepared data with {len(original[:args.n_samples])} human-written and llm-generated texts, with a maximum of 512 tokens according to mask_tokenizer.")
 
-    args.indices = args.indices[mask]
-    args.indices = args.indices[:args.n_samples]
+    # args.indices = args.indices[mask]
+    # args.indices = args.indices[:args.n_samples]
 
-    logger.info(f"Updated indices: {args.indices.values.tolist()}")
+    # logger.info(f"Updated indices: {args.indices.values.tolist()}")
 
     return {'original': original[:args.n_samples], 'sampled': generated[:args.n_samples]}

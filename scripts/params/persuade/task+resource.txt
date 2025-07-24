@@ -1,0 +1,11 @@
+--dataset persuade --n_samples 75 --cache_dir ../resources --chunk_size 50 --model detect-gpt --prompt_mode task+resource
+--dataset persuade --n_samples 75 --cache_dir ../resources --chunk_size 50 --model detect-gpt --prompt_mode task+resource --generative_model gpt-4o-mini-2024-07-18
+
+--dataset persuade --n_samples 75 --cache_dir ../resources --model ghostbuster --prompt_mode task+resource
+--dataset persuade --n_samples 75 --cache_dir ../resources --model ghostbuster --prompt_mode task+resource --generative_model gpt-4o-mini-2024-07-18
+
+--dataset persuade --n_samples 75 --cache_dir ../resources --model intrinsic-dim --prompt_mode task+resource
+--dataset persuade --n_samples 75 --cache_dir ../resources --model intrinsic-dim --prompt_mode task+resource --generative_model gpt-4o-mini-2024-07-18
+
+--dataset persuade --n_samples 75 --cache_dir ../resources --model roberta --prompt_mode task+resource --checkpoint detectors/RoBERTa/checkpoints/argument-annotated-essays/binary/checkpoint-123
+--dataset persuade --n_samples 75 --cache_dir ../resources --model roberta --prompt_mode task+resource --generative_model gpt-4o-mini-2024-07-18 --checkpoint detectors/RoBERTa/checkpoints/argument-annotated-essays/binary/checkpoint-123

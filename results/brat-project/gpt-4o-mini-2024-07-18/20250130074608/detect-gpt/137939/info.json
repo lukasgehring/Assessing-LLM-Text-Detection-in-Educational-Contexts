@@ -1,0 +1,57 @@
+{
+    "model": "DetectGPT",
+    "input_hashes": {
+        "human_hash": "1984e80c496d1af0e5e1f3caea9013ee4dc3390a54c2ab753bdbb7a2b2154182",
+        "llm_hash": "24c91a83b949ddfa9c5664448a4e0f0fb167856c850b0fbf65c8f249d21593bf"
+    },
+    "start_at": "2025-02-28 11:21:54.777597",
+    "duration": "6897.70s",
+    "dataset": {
+        "info": {
+            "model": "gpt-4o-mini-2024-07-18",
+            "dataset": "brat-project",
+            "temperature": 1,
+            "max_new_tokens": 512,
+            "job_id": "20250130074608",
+            "instruction": "You are a student writing an essay on a given topic. Write around 300 words.",
+            "prompt_mode": "task",
+            "summary_file": "human_summaries_t5-3b",
+            "disable_log_file": false
+        },
+        "attack": null,
+        "prompt": {
+            "system": "You are a student writing an essay on a given topic. Write around 300 words.",
+            "user": "Write an essay for this task: Some people think that children should be taught to compete, but others think that children should be taught to co-operate that become more useful adults. What do you think?"
+        },
+        "data_hashes": {
+            "question_hash": "bf1df95fd44e8a6335c4f4fae2b8a1aae914a2ee7163f95c00cef682feee2d6d",
+            "human_hash": "efbc1c5061c08d949660d5be8b2767e38a6936e7ac0836f698902a9cf41c2414",
+            "llm_hash": "9c70466b4ce71d99a8a8749effd34b466ebba4ffc5d34c5f783e9b9289a84cb1"
+        }
+    },
+    "args": {
+        "models": [
+            "ghostbuster",
+            "detect-gpt"
+        ],
+        "device": "cuda:0",
+        "n_samples": 402,
+        "chunk_size": 50,
+        "base_model_name": "gpt2-xl",
+        "mask_filling_model_name": "t5-3b",
+        "cache_dir": "../resources",
+        "max_num_attempts": 20,
+        "disable_log_file": false,
+        "seed": 42,
+        "max_words": 100,
+        "cut_sentences": false,
+        "use_detector_cache": false,
+        "checkpoint": null,
+        "buffer_size": 1,
+        "mask_top_p": 1.0,
+        "pct_words_masked": 0.3,
+        "n_perturbation": 100,
+        "span_length": 2,
+        "job_id": "137939"
+    }
+}

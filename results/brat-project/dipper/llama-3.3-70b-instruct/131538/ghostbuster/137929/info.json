@@ -1,0 +1,58 @@
+{
+    "model": "Ghostbuster",
+    "input_hashes": {
+        "human_hash": "bde5f22229a96fe7d17e58593e1d57ef9689fa03f2132f3cef18b61267cce20b",
+        "llm_hash": "6bb13ccb48847b11e6952172818e2fe457eb55a1f075422de99c1dc182e983dc"
+    },
+    "start_at": "2025-02-28 09:52:36.521927",
+    "duration": "452.53s",
+    "dataset": {
+        "info": {
+            "model": "meta-llama/Llama-3.3-70B-Instruct",
+            "dataset": "brat-project",
+            "batch_size": 8,
+            "temperature": 1,
+            "max_new_tokens": 512,
+            "prompt_mode": "task",
+            "summary_file": "human_summaries_t5-3b",
+            "job_id": "131538",
+            "disable_log_file": false,
+            "instruction": "You are a student writing an essay on a given topic. Write around 300 words."
+        },
+        "attack": "dipper",
+        "prompt": {
+            "user": "You are a student writing an essay on a given topic. Write around 300 words.",
+            "system": "Write an essay for this task: Some people think that children should be taught to compete, but others think that children should be taught to co-operate that become more useful adults. What do you think?"
+        },
+        "data_hashes": {
+            "question_hash": "bf1df95fd44e8a6335c4f4fae2b8a1aae914a2ee7163f95c00cef682feee2d6d",
+            "human_hash": "efbc1c5061c08d949660d5be8b2767e38a6936e7ac0836f698902a9cf41c2414",
+            "llm_hash": "4cb034726274918a53d078d77be544bb56b3c4df1724a1ed6a5618a185d24861"
+        }
+    },
+    "args": {
+        "models": [
+            "detect-gpt",
+            "ghostbuster"
+        ],
+        "device": "cuda:0",
+        "n_samples": 402,
+        "chunk_size": 50,
+        "base_model_name": "gpt2-xl",
+        "mask_filling_model_name": "t5-3b",
+        "cache_dir": "../resources",
+        "max_num_attempts": 20,
+        "disable_log_file": false,
+        "seed": 42,
+        "max_words": null,
+        "cut_sentences": false,
+        "use_detector_cache": true,
+        "checkpoint": null,
+        "buffer_size": 1,
+        "mask_top_p": 1.0,
+        "pct_words_masked": 0.3,
+        "n_perturbation": 100,
+        "span_length": 2,
+        "job_id": "137929"
+    }
+}

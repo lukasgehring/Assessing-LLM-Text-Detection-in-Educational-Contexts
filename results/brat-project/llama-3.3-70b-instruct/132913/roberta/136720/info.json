@@ -1,0 +1,57 @@
+{
+    "model": "RoBERTa",
+    "input_hashes": {
+        "human_hash": "e1ff295865269b93d2956ecb98e0311dab1f63e01052b81dc6e3c2f5d6e7b49d",
+        "llm_hash": "149b16b4c47eaebf7299b47bac0d7892ebc6888f02117d3ef8447f7b1c5c2ec3"
+    },
+    "start_at": "2025-02-24 13:33:28.058512",
+    "duration": "6.24s",
+    "dataset": {
+        "info": {
+            "model": "meta-llama/Llama-3.3-70B-Instruct",
+            "dataset": "brat-project",
+            "batch_size": 8,
+            "temperature": 1,
+            "max_new_tokens": 512,
+            "job_id": "132913",
+            "instruction": "You are a student writing an essay on a given topic. Write around 300 words.",
+            "disable_log_file": false,
+            "prompt_mode": "task+summary",
+            "summary_file": "human_summaries_t5-3b"
+        },
+        "attack": null,
+        "prompt": {
+            "user": "You are a student writing an essay on a given topic. Write around 300 words.",
+            "system": "Write an essay for this task: Some people think that children should be taught to compete, but others think that children should be taught to co-operate that become more useful adults. What do you think?\n\nPlease include the following information: competition can effectively promote the development of economy . however, when we discuss about the issue of competition or cooperation, what we are concerned about is not the whole society . through cooperation, children can learn about interpersonal skills which are significant in the future life of all students ."
+        },
+        "data_hashes": {
+            "question_hash": "cc218bf569cfa95d2d45f8b07dd7e03ff1beb98a91f109bb71570ff54cf7098a",
+            "human_hash": "6ad35e83dbff240023d3e1423212d38f5664acbcec981538af53671e9b13167e",
+            "llm_hash": "4caafe8a79d30b764dbfae427c4ab8b99d011f92f999b597ed18bd50918596a1"
+        }
+    },
+    "args": {
+        "models": [
+            "roberta"
+        ],
+        "device": "cuda:0",
+        "n_samples": 5,
+        "chunk_size": 20,
+        "base_model_name": "gpt2-xl",
+        "mask_filling_model_name": "t5-3b",
+        "cache_dir": ".resources",
+        "max_num_attempts": 20,
+        "disable_log_file": false,
+        "seed": 42,
+        "max_words": null,
+        "cut_sentences": false,
+        "use_detector_cache": false,
+        "checkpoint": "detectors/RoBERTa/checkpoints/ielts/llama-3.3-70b-instruct/135672/checkpoint-21",
+        "buffer_size": 1,
+        "mask_top_p": 1.0,
+        "pct_words_masked": 0.3,
+        "n_perturbation": 100,
+        "span_length": 2,
+        "job_id": "136720"
+    }
+}

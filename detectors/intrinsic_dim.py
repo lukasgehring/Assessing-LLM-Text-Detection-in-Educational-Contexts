@@ -1,12 +1,7 @@
-import gzip
-import os
-import pickle
 import time
 
-import pandas as pd
 import torch
 from loguru import logger
-from sklearn.metrics import roc_curve
 from tqdm import tqdm
 from transformers import RobertaTokenizer, RobertaModel
 
@@ -15,10 +10,9 @@ import numpy as np
 from scipy.spatial.distance import cdist
 from threading import Thread
 
+from detectors.detector_interface import Detector
 from detectors.evaluate import run_perturbation_experiment
-from detectors.utils.load_hf import hf_load_pretrained_llm, model_to_device
-from detectors.utils.metrics import get_roc_metrics, get_precision_recall_metrics
-from utils.save_data import save_results
+from detectors.utils.load_hf import hf_load_pretrained_llm
 
 # TODO: Add parameter or fix!
 MINIMAL_CLOUD = 47
@@ -53,7 +47,6 @@ def process_string(sss):
 class PHD():
     def __init__(self, alpha=1.0, metric='euclidean', n_reruns=3, n_points=7, n_points_min=3):
 
-
         '''
         Initializes the instance of PH-dim computer
         Parameters:
@@ -71,12 +64,10 @@ class PHD():
         self.metric = metric
         self.is_fitted_ = False
 
-
     def _sample_W(self, W, nSamples):
         n = W.shape[0]
         random_indices = np.random.choice(n, size=nSamples, replace=False)
         return W[random_indices]
-
 
     def _calc_ph_dim_single(self, W, test_n, outp, thread_id):
         lengths = []
@@ -99,7 +90,6 @@ class PHD():
         N = len(x)
         outp[thread_id] = (N * (x * y).sum() - x.sum() * y.sum()) / (N * (x ** 2).sum() - x.sum() ** 2)
 
-
     def fit_transform(self, X, y=None, min_points=50, max_points=512, point_jump=40):
         '''
         Computing the PH-dim
@@ -110,7 +100,6 @@ class PHD():
             4) max_points --- size of maximal subsample to be drawn
             5) point_jump --- step between subsamples
         '''
-
 
         ms = np.zeros(self.n_reruns)
         test_n = range(min_points, max_points, point_jump)
@@ -126,12 +115,14 @@ class PHD():
         m = np.mean(ms)
         return 1 / (1 - m)
 
+
 def preprocess_text(text):
     return text.replace('\n', ' ').replace('  ', ' ')
 
 
 def get_phd_single(text, tokenizer, model, solver):
-    inputs = tokenizer(preprocess_text(text), truncation=True, max_length=512, return_tensors="pt")
+    MIN_SUBSAMPLE = 40
+    inputs = tokenizer(preprocess_text(text), truncation=True, max_length=512, return_tensors="pt").to("cuda")
     with torch.no_grad():
         outp = model(**inputs)
 
@@ -140,13 +131,22 @@ def get_phd_single(text, tokenizer, model, solver):
 
     mn_points = MIN_SUBSAMPLE
     step = (mx_points - mn_points) // INTERMEDIATE_POINTS
+    while step <= 0:
+        mn_points -= 5
+        step = (mx_points - mn_points) // INTERMEDIATE_POINTS
 
-    return solver.fit_transform(outp[0][0].numpy()[1:-1], min_points=mn_points, max_points=mx_points - step, point_jump=step)
+    if mn_points != MIN_SUBSAMPLE:
+        logger.warning(f"Text is to short. Reducing MIN_SUBSAMPLE to {MIN_SUBSAMPLE}!")
+
+    return solver.fit_transform(outp[0][0].cpu().numpy()[1:-1], min_points=mn_points,
+                                max_points=mx_points - step,
+                                point_jump=step)
+
 
 def get_phd(df, tokenizer, model, is_list=False, alpha=1.0):
     dims = []
     PHD_solver = PHD(alpha=alpha, metric='euclidean', n_points=9)
-    for s in tqdm(df):
+    for s in tqdm(df.answer):
         if is_list:
             text = s[0]
         else:
@@ -160,19 +160,23 @@ def run(data, args):
     human = data["human"][:args.n_samples]
     llm = data["llm"][:args.n_samples]
 
-    model, tokenizer = hf_load_pretrained_llm('roberta-base', model_class=RobertaModel, tokenizer_class=RobertaTokenizer, device_map="cpu", cache_dir=args.cache_dir)
+    model, tokenizer = hf_load_pretrained_llm('roberta-base', model_class=RobertaModel,
+                                              tokenizer_class=RobertaTokenizer, device_map="cpu",
+                                              cache_dir=args.cache_dir)
 
     # model_to_device(model, args)
 
     logger.debug(f"Compute intrinsic dimension of the human-written texts.")
     start = time.time()
     human_phd = get_phd(human, tokenizer=tokenizer, model=model) * -1
-    logger.info(f"Finished computation of {len(human_phd)} intrinsic dimensions of the human-written texts. ({time.time() - start:.2f}s)")
+    logger.info(
+        f"Finished computation of {len(human_phd)} intrinsic dimensions of the human-written texts. ({time.time() - start:.2f}s)")
 
     logger.debug(f"Compute intrinsic dimension of the LLM-generated texts.")
     start = time.time()
-    llm_phd = get_phd(llm,tokenizer=tokenizer, model=model) * -1
-    logger.info(f"Finished computation of {len(llm_phd)} intrinsic dimensions of the LLM-generated texts. ({time.time() - start:.2f}s)")
+    llm_phd = get_phd(llm, tokenizer=tokenizer, model=model) * -1
+    logger.info(
+        f"Finished computation of {len(llm_phd)} intrinsic dimensions of the LLM-generated texts. ({time.time() - start:.2f}s)")
 
     predictions = {'human': human_phd.tolist(), 'llm': llm_phd.tolist()}
 
@@ -194,3 +198,30 @@ def run(data, args):
         model_name="IntrinsicDim (PHD)",
         args=args
     )
+
+
+class IntrinsicDim(Detector):
+    def __init__(self, args):
+        super().__init__(name="IntrinsicDim", args=args)
+
+    def run(self, data):
+        data = data.head(self.args.n_samples)
+        self.add_data_hash_to_args(human_data=data[data.is_human == 1], llm_data=data[data.is_human == 0])
+
+        model, tokenizer = hf_load_pretrained_llm('roberta-base', model_class=RobertaModel,
+                                                  tokenizer_class=RobertaTokenizer, device_map="auto",
+                                                  cache_dir=self.args.cache_dir)
+
+        # model_to_device(model, args)
+
+        logger.debug(f"Compute intrinsic dimension of the texts.")
+        start = time.time()
+        phd = get_phd(data, tokenizer=tokenizer, model=model)
+        logger.info(
+            f"Finished computation of {len(phd)} intrinsic dimensions of the texts. ({time.time() - start:.2f}s)")
+
+        predictions = phd.flatten().tolist()
+
+        self.save(predictions=predictions, answer_ids=data.id)
+
+        return predictions, data.id

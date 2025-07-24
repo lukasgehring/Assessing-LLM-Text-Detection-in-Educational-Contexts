@@ -1,0 +1,18 @@
+/homes/lgehring/miniconda3/envs/BenchEduLLMDetect/lib/python3.10/site-packages/transformers/utils/hub.py:128: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+usage: BenchEduLLMDetect [-h] [--models MODELS [MODELS ...]]
+                         [--dataset DATASET] [--device DEVICE]
+                         [--n_samples N_SAMPLES] [--chunk_size CHUNK_SIZE]
+                         [--base_model_name BASE_MODEL_NAME]
+                         [--mask_filling_model_name MASK_FILLING_MODEL_NAME]
+                         [--cache_dir CACHE_DIR]
+                         [--max_num_attempts MAX_NUM_ATTEMPTS]
+                         [--disable_log_file] [--openai_key OPENAI_KEY]
+                         [--seed SEED] [--max_words MAX_WORDS]
+                         [--cut_sentences] [--use_detector_cache]
+                         [--checkpoint CHECKPOINT] [--buffer_size BUFFER_SIZE]
+                         [--mask_top_p MASK_TOP_P]
+                         [--pct_words_masked PCT_WORDS_MASKED]
+                         [--n_perturbation N_PERTURBATION]
+                         [--span_length SPAN_LENGTH]
+BenchEduLLMDetect: error: argument --dataset: expected one argument

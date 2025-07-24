@@ -1,71 +1,96 @@
-import time
+import os
+import sys
 
 import torch
 from loguru import logger
 
-from detectors import intrinsic_dim
-from detectors.RoBERTa import roberta
-from detectors.detect_gpt_based_detectors import detect_gpt_based
-from detectors.ghostbuster import ghostbuster
+from database.interface import get_answers, get_answers_by_id
+from detectors.RoBERTa.roberta_class import RoBERTa
+from detectors.detect_gpt_based_detectors.detect_gpt import DetectGPT
+from detectors.detect_gpt_based_detectors.fast_detect_gpt import FastDetectGPT
+from detectors.ghostbuster.ghostbuster import Ghostbuster
+from detectors.gptzero import GPTZeroDetector
+from detectors.intrinsic_dim import IntrinsicDim
 from utils.args import init_parser
-from utils.load_data import load_data
 from utils.logger import init_logger, log_resources
 from utils.seeds import set_seeds
+from utils.truncate_text import apply_max_words
 
 
 def run(args):
-
     # remove this line, if you want to execute without a seed
     set_seeds(args.seed)
 
-    # loading data (questions, human-written and llm-generated texts)
-    data = load_data(args)
+    # load full dataset or "mixed" one
+    if args.dataset == 'mixed':
+        with open(os.path.join("datasets", 'mixed_dataset_ids.txt'), 'r', encoding='utf-8') as f:
+            ids = [int(line.rstrip('\n')) for line in f]
+        df = get_answers_by_id(args.database, ids)
+    else:
+        df = get_answers(
+            database=args.database,
+            dataset=args.dataset,
+            is_human=args.prompt_mode == "human",
+            generative_model=args.generative_model,
+            prompt_mode=args.prompt_mode
+        )
 
-    # iterate through all defined detector models and group them (if possible)
-    detect_gpt_based_models = []
-    for model in args.models:
+    # exit if dataset is empty
+    if df.empty:
+        logger.error("No answers found. Please check your prompt mode, dataset and generative model parameters.")
+        sys.exit(1)
 
-        # all detect-gpt based models
-        if model in ["detect-gpt", "detect-llm"]:
-            detect_gpt_based_models.append(model)
+    if args.max_words:
+        df = apply_max_words(df, args)
 
-        if model == "intrinsic-dim":
-            logger.info("Executing Intrinsic-Dim model")
-            args.start_timestamp = time.time()
-            intrinsic_dim.run(data, args)
+    if args.model in "detect-gpt":
+        logger.info("Executing DetectGPT model")
+        detector = DetectGPT(args)
 
-        if model == "ghostbuster":
-            logger.info("Executing Ghostbuster model")
-            args.start_timestamp = time.time()
-            ghostbuster.run(data, args)
+    elif args.model in "fast-detect-gpt":
+        logger.info("Executing DetectGPT model")
+        detector = FastDetectGPT(args)
 
-        if model == "roberta":
-            logger.info("Executing RoBERTa model")
-            args.start_timestamp = time.time()
-            roberta.run(data, args)
+    elif args.model == "intrinsic-dim":
+        logger.info("Executing Intrinsic-Dim model")
+        detector = IntrinsicDim(args)
 
-    # execute detectors (inference and evaluation)
-    if len(detect_gpt_based_models) > 0:
-        start = time.time()
-        logger.info("Executing DetectGPT-based model(s)")
-        args.start_timestamp = time.time()
-        detect_gpt_based.run(detect_gpt_based_models, data, args)
-        logger.info(f"DetectGPT-based model(s) finished! ({time.time() - start: .2f}s)")
+    elif args.model == "ghostbuster":
+        logger.info("Executing Ghostbuster model")
+        detector = Ghostbuster(args)
 
+    elif args.model == "roberta":
+        logger.info("Executing RoBERTa model")
+        detector = RoBERTa(args)
+
+    elif args.model == "gpt-zero":
+        logger.info("Executing GPTZero model")
+        detector = GPTZeroDetector(args)
+
+    # You can place your own detector here
+    # ---------------------------------
+
+    # ---------------------------------
+
+    else:
+        logger.error(f"Unknown model {args.model}. Please provide a valid model name!")
+        sys.exit(0)
+
+    # start detection
+    detector(df)
 
 
 if __name__ == "__main__":
     torch.cuda.empty_cache()
 
     # parse arguments
-    args = init_parser()
+    parsed_args = init_parser()
 
     # init loguru logger
-    args.job_id = init_logger(args=args)
+    parsed_args.job_id = init_logger(args=parsed_args)
 
     log_resources()
-    logger.info(f"Run using the following arguments: {vars(args)}")
+    logger.info(f"Run using the following arguments: {vars(parsed_args)}")
 
     with logger.catch():
-        run(args=args)
-
+        run(args=parsed_args)

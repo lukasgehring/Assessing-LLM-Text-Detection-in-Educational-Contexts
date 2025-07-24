@@ -1,0 +1,57 @@
+{
+    "model": "RoBERTa",
+    "input_hashes": {
+        "human_hash": "ba9065c41813b2c19b090dae868ccebab01a772e1ca10f96bdbacb2a8c9adf3c",
+        "llm_hash": "4bc5cd1c3b0e10075f4943ac4d3042ab3010123a0dd632ebd7e1b92a83ca74c7"
+    },
+    "start_at": "2025-02-24 13:36:14.629103",
+    "duration": "6.55s",
+    "dataset": {
+        "info": {
+            "model": "meta-llama/Llama-3.3-70B-Instruct",
+            "dataset": "ielts",
+            "batch_size": 4,
+            "temperature": 1,
+            "max_new_tokens": 512,
+            "job_id": "135672",
+            "instruction": "You are a student writing an essay on a given topic. Write around 300 words.",
+            "disable_log_file": false,
+            "prompt_mode": "task",
+            "summary_file": "human_summaries_t5-3b"
+        },
+        "attack": null,
+        "prompt": {
+            "user": "You are a student writing an essay on a given topic. Write around 300 words.",
+            "system": "Write an essay for this task: A country becomes more interesting and develops more quickly when its population includes a mixture of nationalities.To what extent do you agree or disagree?Give reasons for your answer and include any relevant examples from your own knowledge or experience."
+        },
+        "data_hashes": {
+            "question_hash": "a672fb349780d99b4375958971caa4a9beee0a29863783390a53aecb74dab92e",
+            "human_hash": "48726018d49d42e7660ea60ec4c1087f6457aaf5c6a5a06be321a31be65eb02f",
+            "llm_hash": "829cfe7ef1788938e55d19e2d02be6d2070d4699f1c3a9d4f47ce65c08f645ef"
+        }
+    },
+    "args": {
+        "models": [
+            "roberta"
+        ],
+        "device": "cuda:0",
+        "n_samples": 5,
+        "chunk_size": 20,
+        "base_model_name": "gpt2-xl",
+        "mask_filling_model_name": "t5-3b",
+        "cache_dir": ".resources",
+        "max_num_attempts": 20,
+        "disable_log_file": false,
+        "seed": 42,
+        "max_words": null,
+        "cut_sentences": false,
+        "use_detector_cache": false,
+        "checkpoint": "detectors/RoBERTa/checkpoints/brat-project/llama-3.3-70b-instruct/131538/checkpoint-21",
+        "buffer_size": 1,
+        "mask_top_p": 1.0,
+        "pct_words_masked": 0.3,
+        "n_perturbation": 100,
+        "span_length": 2,
+        "job_id": "136720"
+    }
+}

@@ -1,0 +1,57 @@
+{
+    "model": "RoBERTa",
+    "input_hashes": {
+        "human_hash": "bf99ed7ace01896d8af883cd4fe203cbb1ec7827d06c1215cd3c14731c575381",
+        "llm_hash": "5bb3b3ec52f7668a61cfc2f65f2b8df530dba165f0de3f5ebad2cc063ca47a8c"
+    },
+    "start_at": "2025-02-24 13:36:41.859139",
+    "duration": "6.09s",
+    "dataset": {
+        "info": {
+            "model": "meta-llama/Llama-3.3-70B-Instruct",
+            "dataset": "ielts",
+            "batch_size": 4,
+            "temperature": 1,
+            "max_new_tokens": 512,
+            "job_id": "136002",
+            "instruction": "You are a student writing an essay on a given topic. Write around 300 words.",
+            "disable_log_file": false,
+            "prompt_mode": "summary",
+            "summary_file": "human_summaries_t5-3b"
+        },
+        "attack": null,
+        "prompt": {
+            "user": "You are a student writing an essay on a given topic. Write around 300 words.",
+            "system": "Write an essay with the following information: some people think that it has negative impact in our life. However, positive effect on this world.? Of Course for several reasons: firstly, it motivates the psychological point in everyone, and women in particular. It may lead to negative effects of too much sexual attention. Secondly, you can sit comfortably with your family and suddenly the telephone is ringing, but it\u2019s nothing important, it is just another company to convince you to buy one of their products. Lastly, sometimes you do not have the financial ability to buy something, but"
+        },
+        "data_hashes": {
+            "question_hash": "006355b0687bacc898a144bd8e491643f69ee438b3b2baf63e0f4cee959fc939",
+            "human_hash": "50318087b7e0fdca4c243ea6f941bafed1b017810375e52a89c758cbff3d7343",
+            "llm_hash": "06b8dea6c42acad31d888a31cf8a5606505ed5a55a196929ffdbf6cece4676d5"
+        }
+    },
+    "args": {
+        "models": [
+            "roberta"
+        ],
+        "device": "cuda:0",
+        "n_samples": 5,
+        "chunk_size": 20,
+        "base_model_name": "gpt2-xl",
+        "mask_filling_model_name": "t5-3b",
+        "cache_dir": ".resources",
+        "max_num_attempts": 20,
+        "disable_log_file": false,
+        "seed": 42,
+        "max_words": null,
+        "cut_sentences": false,
+        "use_detector_cache": false,
+        "checkpoint": "detectors/RoBERTa/checkpoints/brat-project/llama-3.3-70b-instruct/131538/checkpoint-21",
+        "buffer_size": 1,
+        "mask_top_p": 1.0,
+        "pct_words_masked": 0.3,
+        "n_perturbation": 100,
+        "span_length": 2,
+        "job_id": "136720"
+    }
+}

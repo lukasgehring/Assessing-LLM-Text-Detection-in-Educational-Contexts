@@ -1,0 +1,53 @@
+{
+    "model": "DetectGPT",
+    "start_at": "2025-02-17 11:36:10.557514",
+    "duration": "6641.11s",
+    "dataset": {
+        "info": {
+            "model": "meta-llama/Llama-3.3-70B-Instruct",
+            "dataset": "brat-project",
+            "batch_size": 8,
+            "temperature": 1,
+            "max_new_tokens": 512,
+            "prompt_mode": "task",
+            "summary_file": "human_summaries_t5-3b",
+            "job_id": "131538",
+            "disable_log_file": false,
+            "instruction": "You are a student writing an essay on a given topic. Write around 300 words."
+        },
+        "attack": null,
+        "prompt": {
+            "user": "You are a student writing an essay on a given topic. Write around 300 words.",
+            "system": "Write an essay for this task: Some people think that children should be taught to compete, but others think that children should be taught to co-operate that become more useful adults. What do you think?"
+        },
+        "data_hashes": {
+            "question_hash": "bf1df95fd44e8a6335c4f4fae2b8a1aae914a2ee7163f95c00cef682feee2d6d",
+            "human_hash": "efbc1c5061c08d949660d5be8b2767e38a6936e7ac0836f698902a9cf41c2414",
+            "llm_hash": "31be0611e92451522a6d81e00c4c08174b46624af2bcdc47ac49e7dd89c6e1b0"
+        }
+    },
+    "args": {
+        "models": [
+            "detect-gpt"
+        ],
+        "device": "cuda:0",
+        "n_samples": 402,
+        "chunk_size": 50,
+        "base_model_name": "gpt2-xl",
+        "mask_filling_model_name": "t5-3b",
+        "cache_dir": "../resources",
+        "max_num_attempts": 20,
+        "disable_log_file": false,
+        "seed": 42,
+        "max_words": 100,
+        "cut_sentences": false,
+        "detector_cache_dir": "detectors/.cache",
+        "use_detector_cache": false,
+        "buffer_size": 1,
+        "mask_top_p": 1.0,
+        "pct_words_masked": 0.3,
+        "n_perturbation": 100,
+        "span_length": 2,
+        "job_id": "135348"
+    }
+}

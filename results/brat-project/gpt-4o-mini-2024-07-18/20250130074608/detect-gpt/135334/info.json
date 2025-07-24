@@ -1,0 +1,55 @@
+{
+    "model": "DetectGPT",
+    "start_at": "2025-02-17 08:03:22.588798",
+    "duration": "29139.18s",
+    "dataset": {
+        "info": {
+            "model": "gpt-4o-mini-2024-07-18",
+            "dataset": "brat-project",
+            "temperature": 1,
+            "max_new_tokens": 512,
+            "job_id": "20250130074608",
+            "instruction": "You are a student writing an essay on a given topic. Write around 300 words.",
+            "prompt_mode": "task",
+            "summary_file": "human_summaries_t5-3b",
+            "disable_log_file": false
+        },
+        "attack": null,
+        "prompt": {
+            "system": "You are a student writing an essay on a given topic. Write around 300 words.",
+            "user": "Write an essay for this task: Some people think that children should be taught to compete, but others think that children should be taught to co-operate that become more useful adults. What do you think?"
+        },
+        "data_hashes": {
+            "question_hash": "bf1df95fd44e8a6335c4f4fae2b8a1aae914a2ee7163f95c00cef682feee2d6d",
+            "human_hash": "efbc1c5061c08d949660d5be8b2767e38a6936e7ac0836f698902a9cf41c2414",
+            "llm_hash": "9c70466b4ce71d99a8a8749effd34b466ebba4ffc5d34c5f783e9b9289a84cb1"
+        }
+    },
+    "args": {
+        "models": [
+            "detect-gpt",
+            "detect-llm",
+            "intrinsic-dim",
+            "ghostbuster"
+        ],
+        "device": "cuda:0",
+        "n_samples": 402,
+        "chunk_size": 50,
+        "base_model_name": "gpt2-xl",
+        "mask_filling_model_name": "t5-3b",
+        "cache_dir": "../resources",
+        "max_num_attempts": 20,
+        "disable_log_file": false,
+        "seed": 42,
+        "max_words": null,
+        "cut_sentences": false,
+        "detector_cache_dir": "detectors/.cache",
+        "use_detector_cache": true,
+        "buffer_size": 1,
+        "mask_top_p": 1.0,
+        "pct_words_masked": 0.3,
+        "n_perturbation": 100,
+        "span_length": 2,
+        "job_id": "135334"
+    }
+}

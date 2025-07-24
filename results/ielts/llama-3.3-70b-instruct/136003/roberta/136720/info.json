@@ -1,0 +1,56 @@
+{
+    "model": "RoBERTa",
+    "input_hashes": {
+        "human_hash": "ba9065c41813b2c19b090dae868ccebab01a772e1ca10f96bdbacb2a8c9adf3c",
+        "llm_hash": "8346b14dfa622f97c3989786a3813109331948f7f1fd5cf902c6223a51f4ce06"
+    },
+    "start_at": "2025-02-24 13:36:55.243062",
+    "duration": "6.82s",
+    "dataset": {
+        "info": {
+            "model": "meta-llama/Llama-3.3-70B-Instruct",
+            "dataset": "ielts",
+            "batch_size": 4,
+            "temperature": 1,
+            "max_new_tokens": 512,
+            "job_id": "136003",
+            "instruction": "",
+            "disable_log_file": false,
+            "prompt_mode": "rewrite-20250220103657",
+            "summary_file": "human_summaries_t5-3b"
+        },
+        "attack": null,
+        "prompt": {
+            "user": "Rewrite this text: The notion that a country becomes more interesting and develops more rapidly with a diverse mixture of nationalities is a compelling argument that holds significant merit. Diversity enriches a nation in numerous ways, influencing its culture, economy, and societal development.\n\nTo begin with, a diverse population fosters cultural exchange and creativity. When different nationalities coexist, they bring unique traditions, languages, and art forms, leading to a richer cultural tapestry. This amalgamation ignites innovation in various sectors, including food, fashion, and entertainment. For instance, cities like New York and London thrive due to the blend of cultures, producing iconic culinary experiences\u2014think of fusion cuisines or diverse art movements that push the boundaries of creativity. Such cultural vibrancy not only makes a country more engaging for its residents but also attracts tourism, contributing to economic growth.\n\nAdditionally, a mixture of nationalities can spur economic development. Diverse workforces bring varied perspectives and problem-solving approaches, which can enhance productivity. Countries such as Singapore have successfully harnessed their multicultural environment by integrating different skills and talents. The result is a robust economy that continually adapts to global changes and challenges. When talent from various backgrounds collaborates, it fosters innovation and entrepreneurship, leading to job creation and economic resilience.\n\nHowever, it is important to acknowledge that diversity can also pose challenges, including integration issues and societal tensions. Yet, when managed effectively through policies that promote inclusion and mutual respect, the benefits far outweigh the downsides.\n\nIn conclusion, I strongly agree that a mixture of nationalities contributes significantly to a country's interest and development. The cultural richness and economic dynamism resulting from diversity can position a nation advantageously in an increasingly interconnected world. With the right frameworks in place to celebrate and embrace this diversity, countries can thrive in ways that homogenous populations may struggle to achieve."
+        },
+        "data_hashes": {
+            "question_hash": "a672fb349780d99b4375958971caa4a9beee0a29863783390a53aecb74dab92e",
+            "human_hash": "48726018d49d42e7660ea60ec4c1087f6457aaf5c6a5a06be321a31be65eb02f",
+            "llm_hash": "25a09da1d9b3d5764fe554aa68fc9e917a225bbd89fc46b6ad555d330194bfb9"
+        }
+    },
+    "args": {
+        "models": [
+            "roberta"
+        ],
+        "device": "cuda:0",
+        "n_samples": 5,
+        "chunk_size": 20,
+        "base_model_name": "gpt2-xl",
+        "mask_filling_model_name": "t5-3b",
+        "cache_dir": ".resources",
+        "max_num_attempts": 20,
+        "disable_log_file": false,
+        "seed": 42,
+        "max_words": null,
+        "cut_sentences": false,
+        "use_detector_cache": false,
+        "checkpoint": "detectors/RoBERTa/checkpoints/brat-project/llama-3.3-70b-instruct/131538/checkpoint-21",
+        "buffer_size": 1,
+        "mask_top_p": 1.0,
+        "pct_words_masked": 0.3,
+        "n_perturbation": 100,
+        "span_length": 2,
+        "job_id": "136720"
+    }
+}

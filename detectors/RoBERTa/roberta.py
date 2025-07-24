@@ -1,3 +1,5 @@
+import sys
+
 import pandas as pd
 import sklearn
 from datasets import Dataset
@@ -54,7 +56,12 @@ if __name__ == "__main__":
     df = pd.read_csv("../../datasets/brat-project/llama-3.3-70b-instruct/131538/data.csv", sep=";", index_col=0)
     df_mix = pd.read_csv("../../datasets/brat-project/llama-3.3-70b-instruct/135465/data.csv", sep=";", index_col=0)
 
-    pipe = pipeline('text-classification', model="checkpoints/ielts/llama-3.3-70b-instruct/135672/checkpoint-310", device="cpu", framework='pt')
+    pipe = pipeline('text-classification',
+                    model="checkpoints/ielts/llama-3.3-70b-instruct/135672/checkpoint-21",
+                    device="cuda",
+                    framework='pt',
+                    #function_to_apply="none",
+                    return_all_scores=True)
 
     samples = 100
 
@@ -62,12 +69,16 @@ if __name__ == "__main__":
     y_pred = []
 
     for data in tqdm(df['human'][:samples]):
-        y_pred.append(int(pipe(data, max_length=512, truncation=True)[0]['label'][-1]))
+        print(pipe(data, max_length=512, truncation=True))
+        #sys.exit(0)
+        #y_pred.append(int(pipe(data, max_length=512, truncation=True)[0]['label'][-1]))
 
     for data in tqdm(df['llm'][:samples]):
-        y_pred.append(int(pipe(data, max_length=512, truncation=True)[0]['label'][-1]))
+        print(pipe(data, max_length=512, truncation=True))
+        #y_pred.append(int(pipe(data, max_length=512, truncation=True)[0]['label'][-1]))
 
-    for data in tqdm(df_mix['human'][:samples]):
-        y_pred.append(int(pipe(data, max_length=512, truncation=True)[0]['label'][-1]))
+    #for data in tqdm(df_mix['human'][:samples]):
+    #    y_pred.append(int(pipe(data, max_length=512, truncation=True)[0]['label'][-1]))
 
-    print(sklearn.metrics.accuracy_score(y_true, y_pred))
+
+    #print(sklearn.metrics.accuracy_score(y_true, y_pred))
