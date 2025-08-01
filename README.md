@@ -4,13 +4,13 @@ The repository contains code & supplement material from the paper **"Assessing L
 Contexts: Does
 Human Contribution Affect Detection?"**.
 
-<img src="/supplementary-material/Method.png" alt="Overview of Contribution Levels " width="500"/>
+<img src="https://anonymous.4open.science/r/Assessing-LLM-Text-Detection-in-Educational-Contexts/supplementary-material/Method.png" alt="Overview of Contribution Levels " width="500"/>
 
 ## Supplementary Material
 
 The supplementary material for the paper, which includes dataset statistics, the actual LLM prompts, fine-tuning
 details, and additional results, can be
-found [here](https://anonymous.4open.science/r/Assessing-LLM-Text-Detection-in-Educational-Contexts/supplementary-material/Paper-Appendix.pdf).
+found [here](./supplementary-material/Paper-Appendix.pdf).
 
 ## Generative Essay Detection in Education Dataset
 
