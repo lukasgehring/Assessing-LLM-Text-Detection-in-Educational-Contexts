@@ -1,20 +1,28 @@
-# BenchEduLLMDetect
+# Assessing LLM Text Detection in Educational Contexts: Does Human Contribution Affect Detection?
 
-The repository contains code & supplement material from the paper **"Assessing LLM Text Detection in Educational Contexts: Does
+The repository contains code & supplement material from the paper **"Assessing LLM Text Detection in Educational
+Contexts: Does
 Human Contribution Affect Detection?"**.
+
+<img src="/supplementary-material/Method.png" alt="Overview of Contribution Levels " width="500"/>
 
 ## Supplementary Material
 
-The supplementary material for the paper, which includes dataset statistics, the actual LLM prompts, fine-tuning details, and additional results, can be
+The supplementary material for the paper, which includes dataset statistics, the actual LLM prompts, fine-tuning
+details, and additional results, can be
 found [here](./supplementary-material/Paper-Appendix.pdf).
 
 ## Generative Essay Detection in Education Dataset
 
-The **G**enerative **E**ssay **D**etection in **E**ducation (**GEDE**) dataset is based on the following three text corpora:
+The **G**enerative **E**ssay **D**etection in **E**ducation (**GEDE**) dataset is based on the following three text
+corpora:
 
-* Annotated Argumentative Essays
-* BAWE
-* PERSUADE
+* Annotated Argumentative Essays [<a href="#ref1">1</a>]
+* BAWE [<a href="#ref1">2</a>]
+* PERSUADE 2.0 [<a href="#ref1">3</a>]
+
+The GEDE dataset and all detector predictions from our experiments can be found in the SQLite database located in the directory `database/database.db`. For those unfamiliar with SQL databases, an CSV
+version of the GEDE dataset is also provided in the `datasets/` directory.
 
 ## Code
 
@@ -39,7 +47,8 @@ on the GEDE datasets.
 | `--prompt_mode`      | `task`                              | [`summary`, `task+summary`, `rewrite-human`, `improve-human`, `rewrite-[job_id]`, `dipper-[job_id]`, `human`] | name of the text category    |
 | `--generative_model` | `meta-llama/Llama-3.3-70B-Instruct` | `gpt-4o-mini-2024-07-18`                                                                                      | name of the generative model |
 
-Note: In order to run `Ghostbuster`, you need to provide a valid OpenAI-API key, as this model requires access to the OpenAI-API.
+Note: In order to run `Ghostbuster`, you need to provide a valid OpenAI-API key, as this model requires access to the
+OpenAI-API.
 
 ### Use our own Detector
 
@@ -79,6 +88,16 @@ detector = MyOwnDetector(args)
 # ---------------------------------
 ...
 ```
+
+## References
+
+<a id="ref1"></a>**[1]** Christian Stab and Iryna Gurevych. 2017. Argument Annotated Essays (version 2). https://tudatalib.ulb.tu-darmstadt.de/handle/tudatalib/2422
+
+<a id="ref2"></a>**[2]** Hilary Nesi, Sheena Gardner, Paul Thompson, and Paul Wickens. 2008. British Academic Written English Corpus. http://hdl.handle.net/20.500.14106/2539 Literary and Linguistic
+Data Service.
+
+<a id="ref3"></a>**[3]** Scott A. Crossley, Yu Tian, Perpetual Baffour, Alex Franklin, Meg Benner, and Ulrich Boser. 2024. A large-scale corpus for assessing written argumentation: PERSUADE 2.0.
+Assessing Writing 61 (2024), 100865. [https://doi.org/10.1016/j.asw.2024.100865](https://doi.org/10.1016/j.asw.2024.100865)
 
 ## Citation
 

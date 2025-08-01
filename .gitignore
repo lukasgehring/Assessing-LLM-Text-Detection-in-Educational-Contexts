@@ -22,3 +22,5 @@ test.py
 pdfs/
 logs/
 scripts/
+
+export_to_csv.py
