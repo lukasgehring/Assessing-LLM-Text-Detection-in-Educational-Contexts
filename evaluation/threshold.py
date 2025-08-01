@@ -146,7 +146,7 @@ def plot_threshold_confidence():
         df = pd.DataFrame(scores)
         df.to_csv("tmp2.csv", index=True)
 
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(9, 5.5))
 
     g = sns.lineplot(
         data=df,
@@ -160,9 +160,10 @@ def plot_threshold_confidence():
     # g.legend(ncol=4, bbox_to_anchor=(0.199, 1), frameon=False)
     g.legend(
         loc='upper center',
-        bbox_to_anchor=(0.49, 1.15),  # center top, above axes
+        bbox_to_anchor=(0.5, 1.19),  # center top, above axes
         ncol=4,  # spread horizontally
-        frameon=False  # removes legend border
+        frameon=False,  # removes legend border
+        columnspacing=1,
     )
     plt.grid(True, which='major', linestyle='-', linewidth=0.75, alpha=0.25, zorder=0)
     plt.tick_params(axis='x', which='minor', bottom=False)
@@ -264,7 +265,7 @@ def threshold_comparison():
         "f1": "F1 score",
     }, regex=False)
 
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(9, 5.5))
     g = sns.barplot(
         x="metric",
         y="score",
@@ -279,7 +280,7 @@ def threshold_comparison():
     # g.bar_label(g.containers[0], fontsize=10, fmt="%.2f")
     # g.bar_label(g.containers[1], fontsize=10, fmt="%.2f")
     # g.bar_label(g.containers[2], fontsize=10, fmt="%.2f")
-    g.legend(ncol=3, bbox_to_anchor=(.85, 1.13), frameon=False)
+    g.legend(ncol=3, bbox_to_anchor=(.9, 1.19), frameon=False)
     plt.grid(True, which='major', linestyle='-', linewidth=0.75, alpha=0.25, zorder=0)
     plt.tick_params(axis='x', which='minor', bottom=False)
     plt.grid(True, which='minor', linestyle='-', linewidth=0.2, alpha=0.15, zorder=0)
