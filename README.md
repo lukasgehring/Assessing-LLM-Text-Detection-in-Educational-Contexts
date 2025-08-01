@@ -10,7 +10,7 @@ Human Contribution Affect Detection?"**.
 
 The supplementary material for the paper, which includes dataset statistics, the actual LLM prompts, fine-tuning
 details, and additional results, can be
-found [here](./supplementary-material/Paper-Appendix.pdf).
+found [here](https://anonymous.4open.science/r/Assessing-LLM-Text-Detection-in-Educational-Contexts/supplementary-material/Paper-Appendix.pdf).
 
 ## Generative Essay Detection in Education Dataset
 
