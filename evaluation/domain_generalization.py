@@ -116,7 +116,7 @@ def create_heatmap_plot(df, name, metric="ROC-AUC"):
 
     plt.savefig(f"plots/{name}.pdf", format="pdf")
 
-    plt.show()
+    # plt.show()
 
 
 def zero_shot_threshold_comparison():
@@ -175,7 +175,7 @@ def create_single_plot(df, name, metric="ROC-AUC", cmap="Blues"):
     # plt.tight_layout(rect=[0.05, 0.0, .8, 1])
     plt.subplots_adjust(right=0.75, bottom=0.1, top=1)
     plt.savefig(f"plots/{name}.pdf", format="pdf")
-    plt.show()
+    # plt.show()
 
 
 if __name__ == "__main__":

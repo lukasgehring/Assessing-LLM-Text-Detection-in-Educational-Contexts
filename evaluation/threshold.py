@@ -64,15 +64,12 @@ sns.set_palette(pastel_colors)
 
 
 def _f1_score_optimization(df, **kwargs):
-    print("F1-score optimization")
     _, _, thresholds = precision_recall_curve(~df.is_human.to_numpy(), df.prediction.to_numpy(), drop_intermediate=True)
-
-    print(len(thresholds))
 
     best_f1 = 0
     optimal_threshold = 0.5
 
-    for t in thresholds:
+    for t in tqdm(thresholds, desc="F1-score optimization"):
         y_pred = (df.prediction.to_numpy() >= t).astype(int)
         macro_f1 = f1_score(~df.is_human.to_numpy(), y_pred, average='macro')
         if macro_f1 > best_f1:
@@ -119,14 +116,12 @@ def plot_threshold_confidence():
         set_label(df)
 
         scores = []
-        for i, ((detector,), sub_df) in tqdm(enumerate(df.groupby(["detector"])), total=15):
+        for i, ((detector,), sub_df) in enumerate(df.groupby(["detector"])):
 
             if detector == "fast-detect-gpt":
                 detector = "Fast-DetectGPT"
             elif detector == "detect-gpt":
                 detector = "DetectGPT"
-            elif detector == "intrinsic-dim":
-                detector = "IntrinsicDim"
             elif detector == "ghostbuster":
                 detector = "Ghostbuster"
             elif detector == "roberta":
@@ -157,7 +152,7 @@ def plot_threshold_confidence():
         legend=True,
         zorder=2,
     )
-    # g.legend(ncol=4, bbox_to_anchor=(0.199, 1), frameon=False)
+
     g.legend(
         loc='upper center',
         bbox_to_anchor=(0.5, 1.19),  # center top, above axes
@@ -177,7 +172,7 @@ def plot_threshold_confidence():
     # plt.ylim(0, 1)
     plt.savefig(f'plots/threshold_fpr.pdf')
 
-    plt.show()
+    # plt.show()
 
 
 def compute_metrics(threshold, data, scores, detector, threshold_type):
@@ -209,14 +204,12 @@ def threshold_comparison():
         set_label(df)
 
         scores = []
-        for i, ((detector,), sub_df) in tqdm(enumerate(df.groupby(["detector"])), total=15):
+        for i, ((detector,), sub_df) in enumerate(df.groupby(["detector"])):
 
             if detector == "fast-detect-gpt":
                 detector = "Fast-DetectGPT"
             elif detector == "detect-gpt":
                 detector = "DetectGPT"
-            elif detector == "intrinsic-dim":
-                detector = "IntrinsicDim"
             elif detector == "ghostbuster":
                 detector = "Ghostbuster"
             elif detector == "roberta":
@@ -290,7 +283,7 @@ def threshold_comparison():
     plt.ylim(0, 1)
     plt.subplots_adjust(top=0.9, right=.93)
     plt.savefig(f'plots/threshold_comparison.pdf')
-    plt.show()
+    # plt.show()
 
 
 if __name__ == "__main__":
@@ -311,7 +304,7 @@ if __name__ == "__main__":
         plt.axvline(x=threshold_f1, color="r", linewidth=2, label=f"f1-score {threshold_f1:.2f}")
         plt.axvline(x=threshold_fp, color="b", linewidth=2, label=f"minimal-fp {threshold_fp:.2f}")
         plt.legend()
-        plt.show()
+        # plt.show()
 
     plot_threshold_confidence()
     threshold_comparison()

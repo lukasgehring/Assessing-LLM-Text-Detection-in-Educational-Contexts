@@ -74,10 +74,6 @@ def compute_boundary_comparison(detector=None):
             num_human = sub_df['is_human'].sum()
             num_llm = (~sub_df['is_human']).sum()
 
-            print(mode)
-            print(num_human)
-            print(num_llm)
-
             sub_df['weights'] = np.where(sub_df['is_human'], 1, num_human / num_llm)
 
             auc_scores.append({
@@ -133,8 +129,8 @@ def boundary_comparison():
 
     plt.tight_layout(rect=[0, 0, 1, 1])
 
-    plt.savefig(f"plots/label_boundaries_roc_all.png", dpi=300)
-    plt.show()
+    plt.savefig(f"plots/label_boundaries_roc_all.pdf")
+    # plt.show()
 
 
 def boundary_comparison_single(detector):
@@ -156,7 +152,7 @@ def boundary_comparison_single(detector):
     plt.tight_layout()
 
     plt.savefig(f"plots/label_boundaries_roc_{detector}.pdf")
-    plt.show()
+    # plt.show()
 
 
 if "__main__" == __name__:

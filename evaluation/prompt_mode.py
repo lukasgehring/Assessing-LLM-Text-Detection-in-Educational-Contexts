@@ -127,7 +127,7 @@ def prediction_boxplot(dataset: str, detector: str, function=roc_curve):
     plt.ylim(-2, 2.5)
     plt.savefig(f"plots/prompt_mode_{detector}.pdf")
 
-    plt.show()
+    # plt.show()
 
 
 if __name__ == "__main__":

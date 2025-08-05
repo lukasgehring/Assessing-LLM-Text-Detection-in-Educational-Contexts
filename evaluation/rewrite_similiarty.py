@@ -132,7 +132,7 @@ def rewrite_cosine_similarity_multi(prompt_mode_1, prompt_mode_2):
         ax.grid()
     plt.savefig(f"plots/rewrite_cos_sim_{prompt_mode_1}_{prompt_mode_2}.pdf")
 
-    plt.show()
+    # plt.show()
 
 
 def rewrite_cosine_similarity():
@@ -181,7 +181,7 @@ def rewrite_cosine_similarity():
 
     plt.savefig("plots/rewrite_cos_sim.pdf", format="pdf", bbox_inches="tight")
 
-    plt.show()
+    # plt.show()
 
 
 if __name__ == '__main__':

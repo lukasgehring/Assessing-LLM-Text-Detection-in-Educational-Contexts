@@ -160,7 +160,7 @@ def catplot():
 
     plt.savefig("plots/results_overview.pdf", format="pdf")
 
-    plt.show()
+    # plt.show()
 
 
 def detector_overview():

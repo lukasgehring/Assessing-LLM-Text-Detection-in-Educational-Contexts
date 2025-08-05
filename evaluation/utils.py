@@ -57,7 +57,6 @@ def set_label(df, boundary="rewrite-human"):
     PROMPT_ORDER = ["improve-human", "rewrite-human", "summary", "task+summary"]
     boundary_index = PROMPT_ORDER.index(boundary)
     prior_prompts = set(PROMPT_ORDER[:boundary_index + 1])
-    print(prior_prompts)
     mask = df['prompt_mode'].isin(prior_prompts)
     df.loc[mask, 'is_human'] = True
 

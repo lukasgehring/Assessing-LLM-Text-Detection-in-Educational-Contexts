@@ -98,7 +98,7 @@ def gpt_zero_class_predictions():
     plt.subplots_adjust(top=0.5)
     plt.tight_layout()
     plt.savefig("plots/gpt-zero-perdictions.pdf")
-    plt.show()
+    # plt.show()
 
 
 def mixed_dataset_roc_curve():
@@ -167,7 +167,7 @@ def mixed_dataset_roc_curve():
         ax.grid()
     plt.savefig("plots/gptzero_on_mixed.pdf")
 
-    plt.show()
+    # plt.show()
 
 
 def generative_model_comparison():

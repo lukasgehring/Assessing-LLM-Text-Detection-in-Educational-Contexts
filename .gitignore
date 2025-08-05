@@ -21,8 +21,10 @@ test.py
 
 pdfs/
 logs/
+
 scripts/
 
 export_to_csv.py
 metadata_comparison.py
 ridge.py
+HUMAN_TEXT_PROBABILITY.py

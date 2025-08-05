@@ -120,7 +120,7 @@ def multiplot_text_statistics(database="../../database/database.db", dataset="BA
 
     if save_plot:
         plt.savefig(f"plots/dataset_stats_{dataset}_{generative_model.split('/')[-1]}_{prompt_mode}.pdf")
-    plt.show()
+    # plt.show()
 
 
 def human_answer_statistics(database="../../database/database.db", dataset="BAWE",
@@ -164,7 +164,7 @@ def human_answer_statistics(database="../../database/database.db", dataset="BAWE
                     bbox_inches="tight",
                     transparent=False)
 
-    plt.show()
+    # plt.show()
 
 
 if "__main__" == __name__:
