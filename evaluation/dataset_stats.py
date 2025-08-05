@@ -1,5 +1,3 @@
-import sys
-
 import pandas as pd
 from loguru import logger
 from matplotlib import pyplot as plt

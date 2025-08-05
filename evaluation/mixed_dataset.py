@@ -209,6 +209,6 @@ def generative_model_comparison():
 
 
 if __name__ == '__main__':
-    # mixed_dataset_roc_curve()
-    # generative_model_comparison()
+    mixed_dataset_roc_curve()
+    generative_model_comparison()
     gpt_zero_class_predictions()

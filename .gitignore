@@ -24,3 +24,5 @@ logs/
 scripts/
 
 export_to_csv.py
+metadata_comparison.py
+ridge.py

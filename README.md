@@ -12,6 +12,8 @@ The supplementary material for the paper, which includes dataset statistics, the
 details, and additional results, can be
 found [here](./supplementary-material/Paper-Appendix.pdf).
 
+Note: If you have problems loading the PDF in your browser, download it using the "Download file" button or move to the `supplementary-material/` directory.
+
 ## Generative Essay Detection in Education Dataset
 
 The **G**enerative **E**ssay **D**etection in **E**ducation (**GEDE**) dataset is based on the following three text
@@ -48,7 +50,7 @@ on the GEDE datasets.
 | `--generative_model` | `meta-llama/Llama-3.3-70B-Instruct` | `gpt-4o-mini-2024-07-18`                                                                                      | name of the generative model |
 
 Note: In order to run `Ghostbuster`, you need to provide a valid OpenAI-API key, as this model requires access to the
-OpenAI-API.
+[OpenAI-API](https://openai.com/api/).
 
 ### Use our own Detector
 

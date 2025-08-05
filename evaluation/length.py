@@ -1,12 +1,11 @@
 import pandas as pd
 import seaborn as sns
-from matplotlib import pyplot as plt, rcParams
-from sklearn.metrics import roc_auc_score, accuracy_score, f1_score
+from matplotlib import pyplot as plt
+from sklearn.metrics import accuracy_score, f1_score
 import matplotlib.colors as mcolors
 from database.interface import get_predictions
 from evaluation.threshold import get_threshold
-from evaluation.utils import select_best_roberta_checkpoint, remove_rows_by_condition, map_dipper_to_generative_model, \
-    filter_and_get_roc_auc, get_roc_auc, set_label
+from evaluation.utils import select_best_roberta_checkpoint, remove_rows_by_condition, map_dipper_to_generative_model, get_roc_auc
 
 sns.set_theme(context="paper", style=None, font_scale=1, rc={
     # lines
@@ -146,9 +145,3 @@ plt.xlabel("Maximum Number of Words", fontweight='bold')
 plt.ylabel("ROC-AUC", fontweight='bold')
 plt.savefig(f"plots/text_length_{METRIC}.pdf")
 plt.show()
-
-# df = pd.DataFrame(scores)
-# sns.lineplot(data=df, x="number of words", y="score", hue="detector", style="generative_model")
-# plt.xlim([50, 300])
-# plt.tight_layout()
-# plt.show()

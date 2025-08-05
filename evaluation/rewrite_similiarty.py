@@ -186,6 +186,4 @@ def rewrite_cosine_similarity():
 
 if __name__ == '__main__':
     rewrite_cosine_similarity()
-    # rewrite_cosine_similarity_multi(prompt_mode_1="rewrite-human", prompt_mode_2="improve-human")
-    # rewrite_cosine_similarity_multi(prompt_mode_1="rewrite", prompt_mode_2="task+summary")
-    # rewrite_cosine_similarity_multi(prompt_mode_1="task", prompt_mode_2="task+summary")
+    rewrite_cosine_similarity_multi(prompt_mode_1="rewrite-human", prompt_mode_2="improve-human")

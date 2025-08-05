@@ -303,10 +303,10 @@ if __name__ == "__main__":
         is_human=None
     )
 
-    # threshold_f1 = get_threshold(df, method="f1-score")
-    # threshold_fp = get_threshold(df, method="minimal-fp", max_fpr=0.05)
+    threshold_f1 = get_threshold(df, method="f1-score")
+    threshold_fp = get_threshold(df, method="minimal-fp", max_fpr=0.05)
 
-    if False:
+    if True:
         sns.kdeplot(data=df, x="prediction", hue="is_human")
         plt.axvline(x=threshold_f1, color="r", linewidth=2, label=f"f1-score {threshold_f1:.2f}")
         plt.axvline(x=threshold_fp, color="b", linewidth=2, label=f"minimal-fp {threshold_fp:.2f}")

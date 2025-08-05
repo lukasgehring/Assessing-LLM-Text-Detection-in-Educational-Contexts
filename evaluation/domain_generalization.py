@@ -1,7 +1,6 @@
 import pandas as pd
-from matplotlib import pyplot as plt, ticker
-from matplotlib.colors import LinearSegmentedColormap
-from sklearn.metrics import roc_curve, auc, accuracy_score, f1_score
+from matplotlib import pyplot as plt
+from sklearn.metrics import roc_curve, auc, f1_score
 
 import seaborn as sns
 from tqdm import tqdm
@@ -120,53 +119,6 @@ def create_heatmap_plot(df, name, metric="ROC-AUC"):
     plt.show()
 
 
-def zero_shot_threshold_comparison_llm_split():
-    for detector in tqdm(["detect-gpt", "fast-detect-gpt", "intrinsic-dim"],
-                         desc="Computing zero-shot detection thresholds"):
-        all_data = []
-        for model in ["gpt-4o-mini-2024-07-18", "meta-llama/Llama-3.3-70B-Instruct"]:
-            df = get_predictions(
-                database="../../database/database.db",
-                dataset=None,
-                generative_model=model,
-                is_human=None,
-                detector=detector,
-                prompt_mode=None,
-                max_words=-1
-            )
-
-            df = remove_rows_by_condition(df, conditions={
-                "prompt_mode": "task+resource"
-            })
-
-            # make sure, to load the correct dipper results
-            df = df.apply(map_dipper_to_generative_model, axis=1)
-
-            # set human label of improve and rewrite-human
-            set_label(df)
-
-            for group, sub_df in df.groupby("name"):
-                threshold = get_threshold(sub_df)
-
-                for group2, sub_sub_df in df.groupby("name"):
-                    score = f1_score(~sub_sub_df['is_human'], sub_sub_df['prediction'] > threshold, average="macro")
-
-                    all_data.append({
-                        "Model": model,
-                        "Training Dataset": group,
-                        "Test Dataset": group2,
-                        "F1-Score": score
-                    })
-
-        df_all = pd.DataFrame(all_data)
-        df_all.replace({"argument-annotated-essays": "AAE"}, inplace=True)
-        df_all.replace({"persuade": "PERSUADE"}, inplace=True)
-        df_all.replace({"gpt-4o-mini-2024-07-18": "GPT-4o-mini"}, inplace=True)
-        df_all.replace({"meta-llama/Llama-3.3-70B-Instruct": "Llama-3.3-70B-Instruct"}, inplace=True)
-
-        create_heatmap_plot(df_all, f"{detector}_treshold_comparison", "F1-Score")
-
-
 def zero_shot_threshold_comparison():
     for detector in tqdm(["detect-gpt", "fast-detect-gpt", "intrinsic-dim"],
                          desc="Computing zero-shot detection thresholds"):
@@ -228,5 +180,4 @@ def create_single_plot(df, name, metric="ROC-AUC", cmap="Blues"):
 
 if __name__ == "__main__":
     roberta_checkpoint_comparison()
-    # zero_shot_threshold_comparison_llm_split()
     zero_shot_threshold_comparison()

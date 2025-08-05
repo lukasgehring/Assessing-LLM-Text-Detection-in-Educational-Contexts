@@ -2,12 +2,11 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 import seaborn as sns
-from sklearn.metrics import auc, roc_auc_score
+from sklearn.metrics import roc_auc_score
 
 from database.interface import get_predictions
 from evaluation.metrics import get_roc_curve
-from evaluation.utils import select_best_roberta_checkpoint, remove_rows_by_condition, map_dipper_to_generative_model, \
-    set_label, highlight_max
+from evaluation.utils import select_best_roberta_checkpoint, remove_rows_by_condition, map_dipper_to_generative_model
 
 sns.set_theme(context="paper", style=None, font_scale=1, rc={
     # lines
@@ -107,15 +106,11 @@ def boundary_comparison():
     df_pivot = df_auc.pivot(values='roc_auc', index=['mode'], columns=['detector'])
     print(df_pivot.to_latex(header=True, index=True, float_format='%.3f'))
 
-    # grid = sns.relplot(data=df, x="fpr", y="tpr", col="detector", height=2.5, aspect=1, kind="line", errorbar=None,
-    #                   hue="mode", col_wrap=2, linewidth=2)
-
     grid = sns.FacetGrid(df, col="detector", hue="mode", height=2.5, aspect=1, sharex=False, sharey=False, col_wrap=2,
                          legend_out=False)
 
     grid.map(sns.lineplot, "fpr", "tpr", errorbar=None)
 
-    # plt.plot([0, 1], [0, 1], color='grey', linestyle='--')
     for i, ax in enumerate(grid.axes.flatten()):
         ax.grid(True)  # Gitterlinien aktivieren
         ax.plot([0, 1], [0, 1], color='grey', linestyle='--')
@@ -134,7 +129,6 @@ def boundary_comparison():
         ax.set_title(new_title, weight='bold')
 
     grid.add_legend(title="Label Boundary")
-    # grid.legend.set_bbox_to_anchor((.75, .28))
     sns.move_legend(grid, "upper left", bbox_to_anchor=(.63, .26), frameon=False)
 
     plt.tight_layout(rect=[0, 0, 1, 1])

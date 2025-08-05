@@ -217,4 +217,4 @@ def detector_overview():
 
 if __name__ == '__main__':
     catplot()
-    # detector_overview()
+    detector_overview()
