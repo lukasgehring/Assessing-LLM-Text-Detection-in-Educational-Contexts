@@ -12,7 +12,7 @@ from detectors.ghostbuster.ghostbuster import Ghostbuster
 from detectors.gptzero import GPTZeroDetector
 from detectors.intrinsic_dim import IntrinsicDim
 from utils.args import init_parser
-from utils.logger import init_logger, log_resources
+from utils.logger import init_logger
 from utils.seeds import set_seeds
 from utils.truncate_text import apply_max_words
 
@@ -89,7 +89,6 @@ if __name__ == "__main__":
     # init loguru logger
     parsed_args.job_id = init_logger(args=parsed_args)
 
-    log_resources()
     logger.info(f"Run using the following arguments: {vars(parsed_args)}")
 
     with logger.catch():

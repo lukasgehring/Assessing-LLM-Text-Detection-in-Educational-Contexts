@@ -2,19 +2,8 @@ import datetime
 import os
 import sys
 
-import psutil
-import torch
 from loguru import logger
 
-
-def log_resources():
-    logger.info(
-        f"System resources -> "
-        f"| CPUs: {psutil.cpu_count(logical=False)} on {psutil.cpu_freq().max:.2f}MHz "
-        f"| GPUs: {f'{torch.cuda.device_count()} ({torch.cuda.get_device_name(0)})' if torch.cuda.device_count() > 0 else 0} "
-        f"| RAM {psutil.virtual_memory().total / 1024 ** 3:.2f}GB "
-        f"|"
-    )
 
 def init_logger(args, logfile_prefix=""):
     # lof file format: 'detector-<year|month|day|hour|minute|second>[-<slurm_job_id>]'

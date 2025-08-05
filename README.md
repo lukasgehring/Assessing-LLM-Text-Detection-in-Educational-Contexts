@@ -33,9 +33,9 @@ on the GEDE datasets.
 
 ### Environment
 
-* Python 3.8
-* PyTorch ...
-* Create the environment using conda: `conda env create -f environment. yml`
+* Python 3.10
+* Create the environment using conda: `conda env create -f environment. yaml`
+* Activate environment using: `conda activate AssessingLLMTextDetection`
 
 ### Experiments
 
