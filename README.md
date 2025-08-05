@@ -41,13 +41,28 @@ on the GEDE datasets.
 
 #### Arguments
 
-| argument             | default                             | other values                                                                                                  | description                  |
-|----------------------|-------------------------------------|---------------------------------------------------------------------------------------------------------------|------------------------------|
-| `--model`            | `detect-gpt`                        | [`fast-detect-gpt`, `intrinsic-dim`, `ghostbuster`, `roberta`, `gpt-zero`]                                    | name of the detector model   |
-| `--dataset`          | `argument-annotated-essays`         | [`bawe`, `persuade`]                                                                                          | name of the data subset      |
-| `--database`         | `../database/database.db`           | other path to the database                                                                                    | path to the database         |
-| `--prompt_mode`      | `task`                              | [`summary`, `task+summary`, `rewrite-human`, `improve-human`, `rewrite-[job_id]`, `dipper-[job_id]`, `human`] | name of the text category    |
-| `--generative_model` | `meta-llama/Llama-3.3-70B-Instruct` | `gpt-4o-mini-2024-07-18`                                                                                      | name of the generative model |
+| Argument                    | Default                             | Other Values                                                                                                | Description                                              |
+|-----------------------------|-------------------------------------|-------------------------------------------------------------------------------------------------------------|----------------------------------------------------------|
+| `--model`                   | `detect-gpt`                        | `fast-detect-gpt`, `intrinsic-dim`, `ghostbuster`, `roberta`, `gpt-zero`                                    | Specifies the detector model.                            |
+| `--dataset`                 | `argument-annotated-essays`         | `persuade`, `BAWE`                                                                                          | Path to the dataset.                                     |
+| `--database`                | `../database/database.db`           |                                                                                                             | Path to the database.                                    |
+| `--prompt_mode`             | `task`                              | `summary`, `task+summary`, `rewrite-human`, `improve-human`, `rewrite-[job_id]`, `dipper-[job_id]`, `human` | Available modes for prompt.                              |
+| `--generative_model`        | `meta-llama/Llama-3.3-70B-Instruct` | `gpt-4o-mini-2024-07-18`                                                                                    | Generative model for the dataset.                        |
+| `--device`                  | `cuda`                              |                                                                                                             | Device for processing.                                   |
+| `--n_samples`               | `5`                                 |                                                                                                             | Number of samples.                                       |
+| `--chunk_size`              | `20`                                |                                                                                                             | Chunk size.                                              |
+| `--base_model_name`         | `gpt2-xl`                           |                                                                                                             | Name of the base model.                                  |
+| `--mask_filling_model_name` | `t5-3b`                             |                                                                                                             | Name of the mask filling model.                          |
+| `--cache_dir`               | `.resources`                        |                                                                                                             | Directory for cache.                                     |
+| `--max_num_attempts`        | `20`                                |                                                                                                             | Maximum number of rewriting attempts.                    |
+| `--disable_log_file`        |                                     |                                                                                                             | Disables the log file.                                   |
+| `--skip_save_to_db`         |                                     |                                                                                                             | Skips saving to the database.                            |
+| `--openai_key`              |                                     |                                                                                                             | OpenAI key.                                              |
+| `--seed`                    | `42`                                |                                                                                                             | Random seed for reproducibility.                         |
+| `--max_words`               |                                     |                                                                                                             | Maximum number of words.                                 |
+| `--cut_sentences`           |                                     |                                                                                                             | Cuts sentences.                                          |
+| `--use_detector_cache`      |                                     |                                                                                                             | Use detector cache.                                      |
+| `--checkpoint`              |                                     |                                                                                                             | Path to the checkpoint for the pretrained RoBERTa model. |
 
 Note: In order to run `Ghostbuster`, you need to provide a valid OpenAI-API key, as this model requires access to the
 [OpenAI-API](https://openai.com/api/).
