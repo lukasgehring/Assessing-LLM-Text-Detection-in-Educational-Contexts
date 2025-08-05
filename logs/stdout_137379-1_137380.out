@@ -1,3 +1,0 @@
-/homes/lgehring/miniconda3/envs/BenchEduLLMDetect/lib/python3.10/site-packages/transformers/utils/hub.py:128: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
-  warnings.warn(
-slurmstepd-worker-4: error: *** JOB 137380 ON worker-4 CANCELLED AT 2025-02-26T07:34:24 ***
