@@ -23,7 +23,7 @@ def init_parser():
 
     parser.add_argument('--device', default="cuda", help="dataset")
     parser.add_argument('--n_samples', default=5, type=int, help="Number of samples")
-    parser.add_argument('--chunk_size', default=20, type=int, help="Chunk size")  # TODO: Maybe combine with batch_size?
+    parser.add_argument('--chunk_size', default=20, type=int, help="Chunk size")
     parser.add_argument('--base_model_name', type=str, default="gpt2-xl")
     parser.add_argument('--mask_filling_model_name', type=str, default="t5-3b")
     parser.add_argument('--cache_dir', type=str, default=".resources")

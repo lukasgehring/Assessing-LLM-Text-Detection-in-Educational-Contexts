@@ -17,7 +17,7 @@ def sample_questions(x):
 
 
 def load_data():
-    with sqlite3.connect('../../database/database.db') as conn:
+    with sqlite3.connect('../database/database.db') as conn:
         questions = pd.read_sql_query("""
         SELECT * FROM questions
         """, conn)
@@ -112,4 +112,4 @@ if __name__ == '__main__':
 
     dataset.id.to_csv("mixed_dataset_ids.txt", index=False, header=False)
 
-    df = get_answers_by_id("../../database/database.db", dataset.id.tolist())
+    df = get_answers_by_id("../database/database.db", dataset.id.tolist())

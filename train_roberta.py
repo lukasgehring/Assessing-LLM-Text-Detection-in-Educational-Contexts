@@ -156,6 +156,14 @@ def train_history(checkpoint_path):
 
 
 if __name__ == "__main__":
+    df = get_answers(
+        database="../database/database.db",
+        dataset="BAWE",
+        is_human=True,
+        generative_model="gpt-4o-mini-2024-07-18",
+        prompt_mode="task"
+    )
+    sys.exit(0)
     # from "How Close is ChatGPT to Human Experts? Comparison Corpus, Evaluation, and Detection"
     parser = argparse.ArgumentParser(prog='Train RoBERTa')
     parser.add_argument('--dataset', default="argument-annotated-essays", help="dataset path")

@@ -398,7 +398,7 @@ def add_question_metadata_to_df(database: str, df: pd.DataFrame) -> pd.DataFrame
 class Test(unittest.TestCase):
 
     def setUp(self):
-        self.database = "../../database/database.db"
+        self.database = "../database/database.db"
 
     def test_all_predictions(self):
         self.assertEqual(158408, len(get_predictions(database=self.database, max_words=None)))

@@ -84,7 +84,7 @@ def corpus_comparison(dataset):
     return df_melted
 
 
-def multiplot_text_statistics(database="../../database/database.db", dataset="BAWE",
+def multiplot_text_statistics(database="../database/database.db", dataset="BAWE",
                               generative_model="meta-llama/Llama-3.3-70B-Instruct", prompt_mode="task",
                               save_plot: bool = False):
     df = get_answers(

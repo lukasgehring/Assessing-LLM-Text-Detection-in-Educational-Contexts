@@ -288,7 +288,7 @@ def threshold_comparison():
 
 if __name__ == "__main__":
     df = get_predictions(
-        database="../../database/database.db",
+        database="../database/database.db",
         dataset="BAWE",
         prompt_mode="improve-human",
         generative_model="gpt-4o-mini-2024-07-18",

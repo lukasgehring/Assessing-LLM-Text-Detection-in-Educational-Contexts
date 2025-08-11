@@ -29,3 +29,4 @@ metadata_comparison.py
 ridge.py
 HUMAN_TEXT_PROBABILITY.py
 fix_predictions.py
+add_existing_results_to_database.py

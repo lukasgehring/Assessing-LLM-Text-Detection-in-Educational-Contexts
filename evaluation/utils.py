@@ -62,7 +62,7 @@ def set_label(df, boundary="rewrite-human"):
 
 
 def get_data(generative_model: str, dataset: str = None, detector: str = None,
-             database: str = "../../database/database.db") -> pd.DataFrame:
+             database: str = "../database/database.db") -> pd.DataFrame:
     # load generative_model predictions
     df = get_predictions(
         database=database,
