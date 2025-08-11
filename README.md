@@ -156,6 +156,10 @@ cd evaluation
 ./generate_all_plots.sh
 ```
 
+## License
+
+The data is provided under a CC BY-NC-SA 4.0 DEED Attribution-NonCommercial-ShareAlike 4.0 International license (https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en)
+
 ## References
 
 <a id="ref1"></a>**[1]** Christian Stab and Iryna Gurevych. 2017. Argument Annotated Essays (version 2). https://tudatalib.ulb.tu-darmstadt.de/handle/tudatalib/2422
