@@ -12,7 +12,7 @@ The supplementary material for the paper, which includes dataset statistics, the
 details, and additional results, can be
 found [here](./supplementary-material/Paper-Appendix.pdf).
 
-Note: If you have problems loading the PDF in your browser, download it using the "Download file" button or move to the `supplementary-material/` directory.
+Note: If you have trouble loading the PDF in your browser, click the "Download file" button or navigate to the `supplementary-material/` directory.
 
 ## Generative Essay Detection in Education Dataset
 
@@ -23,23 +23,60 @@ corpora:
 * BAWE [<a href="#ref1">2</a>]
 * PERSUADE 2.0 [<a href="#ref1">3</a>]
 
-The GEDE dataset and all detector predictions from our experiments can be found in the SQLite database located in the directory `database/database.db`. For those unfamiliar with SQL databases, an CSV
-version of the GEDE dataset is also provided in the `datasets/` directory.
+The GEDE dataset and all detector predictions from our experiments can be found in the SQLite database located in the `database/` directory. For those unfamiliar with SQL databases, a CSV
+version of the GEDE dataset is also provided in the `dataset/` directory.
 
-## Code
+## Run Experiments
 
-This repository contains the full code to run all experiments. Furthermore, we include the predictions of all detectors
-on the GEDE datasets.
+This repository contains the complete code required to perform all experiments. Additionally, it includes the predictions of all detectors on the GEDE datasets.
+
+We also provide an interface to run your own detector.
 
 ### Environment
 
-* Python 3.10
-* Create the environment using conda: `conda env create -f environment. yaml`
-* Activate environment using: `conda activate AssessingLLMTextDetection`
+You can create the environment using [conda](https://www.anaconda.com/docs/getting-started/miniconda/install).
+
+```bash
+conda env create -f environment. yaml
+conda activate AssessingLLMTextDetection
+```
 
 ### Experiments
 
+You can run the experiments using the scripts provided in the `scripts/` directory.
+
+For example, to execute all RoBERTa experiments, run the following command:
+
+```bash
+cd scripts
+./run_roberta.sh
+```
+
+#### Run on a sub-dataset
+
+If you want to run the experiments on a subset of the GEDE dataset, you can use the parameters from the `scripts/params/` directory.
+
+A script that runs Fast-DetectGPT only on AAE could look like this:
+
+```bash
+#!/bin/bash
+
+mapfile -t PARAMS < <(cat params/aae/fast_detect_gpt.txt | grep -vE '^\s*$')
+
+cd ../ || exit
+
+for param in "${PARAMS[@]}"; do
+  echo "====================================="
+  echo "Parameter: ${param}"
+  echo "====================================="
+  python -u main.py "$@" ${param}
+done
+
+```
+
 #### Arguments
+
+You can further customize your experiments by running `main.py` with the following arguments:
 
 | Argument                    | Default                             | Other Values                                                                                                | Description                                              |
 |-----------------------------|-------------------------------------|-------------------------------------------------------------------------------------------------------------|----------------------------------------------------------|
@@ -64,8 +101,7 @@ on the GEDE datasets.
 | `--use_detector_cache`      |                                     |                                                                                                             | Use detector cache.                                      |
 | `--checkpoint`              |                                     |                                                                                                             | Path to the checkpoint for the pretrained RoBERTa model. |
 
-Note: In order to run `Ghostbuster`, you need to provide a valid OpenAI-API key, as this model requires access to the
-[OpenAI-API](https://openai.com/api/).
+Note: To run `Ghostbuster`, you must provide a valid OpenAI API key because this model requires access to the [OpenAI-API](https://openai.com/api/).
 
 ### Use our own Detector
 
@@ -93,7 +129,7 @@ class MyOwnDetector(Detector):
 
 ```
 
-After impementing your detector, you can include it in the experiments by writing this into the `main.py` file:
+After implementing your detector, include it in your experiments by adding the following to the `main.py` file:
 
 ```python
 ...
@@ -104,6 +140,16 @@ logger.info("Executing MyDetector model")
 detector = MyOwnDetector(args)
 # ---------------------------------
 ...
+```
+
+## Evaluate/Plot Experiments
+
+You can evaluate the experiments contained in the `database.db` SQLite database, using the scripts provieded in the `evaluate/` directory.
+To generate all plots, run the following command:
+
+```bash
+cd evaluation
+./generate_all_plots.sh
 ```
 
 ## References

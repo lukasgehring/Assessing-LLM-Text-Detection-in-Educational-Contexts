@@ -1,0 +1,33 @@
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode human
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode human --max_words 50
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode human --max_words 100
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode human --max_words 150
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode human --max_words 200
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode human --max_words 250
+
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode dipper-146008
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode dipper-20250408085504
+
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode task
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode task --max_words 50
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode task --max_words 100
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode task --max_words 150
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode task --max_words 200
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode task --max_words 250
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode summary
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode task+summary
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode rewrite-human
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode improve-human
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode rewrite-20250408085504
+
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode task --generative_model gpt-4o-mini-2024-07-18
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode task --max_words 50 --generative_model gpt-4o-mini-2024-07-18
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode task --max_words 100 --generative_model gpt-4o-mini-2024-07-18
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode task --max_words 150 --generative_model gpt-4o-mini-2024-07-18
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode task --max_words 200 --generative_model gpt-4o-mini-2024-07-18
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode task --max_words 250 --generative_model gpt-4o-mini-2024-07-18
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode summary --generative_model gpt-4o-mini-2024-07-18
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode task+summary --generative_model gpt-4o-mini-2024-07-18
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode rewrite-human --generative_model gpt-4o-mini-2024-07-18
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode improve-human --generative_model gpt-4o-mini-2024-07-18
+--dataset argument-annotated-essays --n_samples 402 --model intrinsic-dim --prompt_mode rewrite-146008 --generative_model gpt-4o-mini-2024-07-18
