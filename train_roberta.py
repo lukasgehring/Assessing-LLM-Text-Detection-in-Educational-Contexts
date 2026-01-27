@@ -22,18 +22,18 @@ def train(args):
         predictions = np.argmax(logits, axis=-1)
         return accuracy.compute(predictions=predictions, references=labels)
 
-    def tokenize_function(examples):
-        return tokenizer(examples["text"], truncation=True, max_length=512)
-
     dataset_splits = load_training_data(args)
 
     model, tokenizer = hf_load_pretrained_llm("roberta-base", model_class=AutoModelForSequenceClassification,
                                               model_kwargs={"num_labels": args.num_labels}, device_map=args.device,
                                               cache_dir=".resources")
 
+    def tokenize_function(examples):
+        return tokenizer(examples["text"], truncation=True, max_length=512)
+
     tokenized_datasets = dataset_splits.map(tokenize_function, batched=True)
 
-    output_dir = f"detectors/RoBERTa/checkpoints1/{args.dataset}/{'binary' if args.num_labels == 2 else 'multiclass'}"
+    output_dir = f"detectors/RoBERTa/checkpoints/{args.dataset}/{'binary' if args.num_labels == 2 else 'multiclass'}"
     training_args = TrainingArguments(
         seed=args.seed,
         data_seed=args.seed,
@@ -77,6 +77,7 @@ def load_training_data(args):
         prompt_mode="task"
     )
 
+
     df = pd.concat([
         df,
         get_answers(
@@ -99,20 +100,12 @@ def load_training_data(args):
         )
     ]).reset_index(drop=True)
 
-    df = pd.concat([
-        df,
-        get_answers(
-            database="../database/database.db",
-            dataset=args.dataset,
-            is_human=False,
-            generative_model="meta-llama/Llama-3.3-70B-Instruct",
-            prompt_mode="task"
-        )
-    ]).reset_index(drop=True)
+    assert not df.duplicated().any()
 
     df.rename(columns={"is_human": "label", "answer": "text"}, inplace=True)
 
     # make sure 1 is the llm label
+    df.label = df.label.astype(int)
     df.label = 1 - df.label
 
     dataset = Dataset.from_pandas(df)
@@ -150,20 +143,13 @@ def train_history(checkpoint_path):
     plt.xlabel("Training Steps")
     plt.ylabel("Loss")
     plt.title("Train vs Eval Loss")
+    #plt.ylim(0, 0.0002)
     plt.legend()
     plt.grid()
     plt.show()
 
 
 if __name__ == "__main__":
-    df = get_answers(
-        database="../database/database.db",
-        dataset="BAWE",
-        is_human=True,
-        generative_model="gpt-4o-mini-2024-07-18",
-        prompt_mode="task"
-    )
-    sys.exit(0)
     # from "How Close is ChatGPT to Human Experts? Comparison Corpus, Evaluation, and Detection"
     parser = argparse.ArgumentParser(prog='Train RoBERTa')
     parser.add_argument('--dataset', default="argument-annotated-essays", help="dataset path")
@@ -177,9 +163,11 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    checkpoint_path = train(args)
-    # checkpoint_path = "detectors/RoBERTa/checkpoints/persuade/binary/checkpoint-64"
+    #checkpoint_path = train(args)
+    #checkpoint_path = "detectors/RoBERTa/checkpoints/BAWE/binary/checkpoint-165"
+    # checkpoint_path = "detectors/RoBERTa/checkpoints/argument-annotated-essays/binary/checkpoint-155"
+    checkpoint_path = "detectors/RoBERTa/checkpoints/persuade/binary/checkpoint-48"
     train_history(checkpoint_path)
 
     # checkpoint_path = "detectors/RoBERTa/checkpoints/argument-annotated-essays/binary/checkpoint-205"
-    train_history(checkpoint_path)
+    #train_history(checkpoint_path)
