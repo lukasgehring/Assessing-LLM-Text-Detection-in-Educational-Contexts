@@ -10,7 +10,7 @@ from sklearn.metrics import roc_curve, f1_score, accuracy_score, precision_recal
 from sklearn.metrics import confusion_matrix
 from tqdm import tqdm
 import matplotlib.colors as mcolors
-from database.interface import get_predictions
+from database.interface import get_predictions, get_answers, get_all_answers
 from evaluation.utils import remove_rows_by_condition, select_best_roberta_checkpoint, map_dipper_to_generative_model, \
     set_label
 
@@ -117,7 +117,6 @@ def plot_threshold_confidence():
 
         scores = []
         for i, ((detector,), sub_df) in enumerate(df.groupby(["detector"])):
-
             if detector == "fast-detect-gpt":
                 detector = "Fast-DetectGPT"
             elif detector == "detect-gpt":
@@ -187,11 +186,14 @@ def compute_metrics(threshold, data, scores, detector, threshold_type):
         "f1": f1_score(~data.is_human.to_numpy(), data.prediction >= threshold, average="macro"),
     })
 
-
 def threshold_comparison():
     if os.path.isfile("tmp.csv"):
         df = pd.read_csv("tmp.csv", index_col=0)
     else:
+
+        answers = get_all_answers("../../database/database.db")
+        print(answers)
+        # TODO: Aus den answers einen split ereugen. Wie erstellen? Was ist mit Roberta bzgl. training?
 
         df = get_predictions(max_words=-1)
         df = remove_rows_by_condition(df, conditions={
@@ -205,7 +207,8 @@ def threshold_comparison():
 
         scores = []
         for i, ((detector,), sub_df) in enumerate(df.groupby(["detector"])):
-
+            print(sub_df)
+            continue
             if detector == "fast-detect-gpt":
                 detector = "Fast-DetectGPT"
             elif detector == "detect-gpt":
@@ -224,6 +227,7 @@ def threshold_comparison():
                     threshold_type=threshold_type
                 )
 
+             # not shown in plot
             if detector in ["RoBERTa", "Ghostbuster"]:
                 compute_metrics(
                     threshold=.5,
@@ -287,24 +291,24 @@ def threshold_comparison():
 
 
 if __name__ == "__main__":
-    df = get_predictions(
-        database="../database/database.db",
-        dataset="BAWE",
-        prompt_mode="improve-human",
-        generative_model="gpt-4o-mini-2024-07-18",
-        detector="fast-detect-gpt",
-        is_human=None
-    )
+    #df = get_predictions(
+    #    database="../database/database.db",
+    #    dataset="BAWE",
+    #    prompt_mode="improve-human",
+    #    generative_model="gpt-4o-mini-2024-07-18",
+    #    detector="fast-detect-gpt",
+    #    is_human=None
+    #)
 
-    threshold_f1 = get_threshold(df, method="f1-score")
-    threshold_fp = get_threshold(df, method="minimal-fp", max_fpr=0.05)
+    #threshold_f1 = get_threshold(df, method="f1-score")
+    #threshold_fp = get_threshold(df, method="minimal-fp", max_fpr=0.05)
 
-    if True:
-        sns.kdeplot(data=df, x="prediction", hue="is_human")
-        plt.axvline(x=threshold_f1, color="r", linewidth=2, label=f"f1-score {threshold_f1:.2f}")
-        plt.axvline(x=threshold_fp, color="b", linewidth=2, label=f"minimal-fp {threshold_fp:.2f}")
-        plt.legend()
-        # plt.show()
+    #if True:
+    #    sns.kdeplot(data=df, x="prediction", hue="is_human")
+    #    plt.axvline(x=threshold_f1, color="r", linewidth=2, label=f"f1-score {threshold_f1:.2f}")
+    #    plt.axvline(x=threshold_fp, color="b", linewidth=2, label=f"minimal-fp {threshold_fp:.2f}")
+    #    plt.legend()
+    #    # plt.show()
 
-    plot_threshold_confidence()
+    # plot_threshold_confidence()
     threshold_comparison()

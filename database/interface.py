@@ -14,32 +14,6 @@ def process_text(text):
     return text.replace("\n", " ")
 
 
-def get_dataset(database: str, dataset: str, prompt_mode: str, generative_model: str):
-    warnings.warn(
-        "Outdated function that may no longer do what it is supposed to!",
-        DeprecationWarning,
-        stacklevel=2
-    )
-    query = f"""
-    SELECT a.id, a.is_human, q.question, a.answer
-    FROM answers AS a
-    JOIN questions AS q ON q.id = a.question_id
-    JOIN datasets AS ds ON ds.id = q.dataset_id AND ds.name = "{dataset}"
-    LEFT JOIN jobs AS j ON j.id = a.job_id
-    WHERE
-        a.is_human = 1 OR
-        a.is_human = 0 AND j.prompt_mode = "{prompt_mode}" AND j.model = "{generative_model}"
-    ORDER BY a.id;
-    """
-
-    with sqlite3.connect(database) as conn:
-        df = pd.read_sql(query, conn)
-
-    df.loc[df['is_human'] == 0, 'answer'] = df.loc[df['is_human'] == 0, 'answer'].apply(process_text)
-    df.loc[df['is_human'] == 1, 'answer'] = df.loc[df['is_human'] == 1, 'answer'].apply(process_text)
-    return df
-
-
 def get_answers_by_id(database: str, ids: List[int]) -> pd.DataFrame:
     """
     Load answers by id.
@@ -115,6 +89,22 @@ def get_answers(database: str, dataset: str, is_human: bool, prompt_mode: str = 
         sys.exit(1)
 
     # process answers
+    df['answer'] = df['answer'].apply(process_text)
+
+    return df
+
+def get_all_answers(database: str):
+    try:
+        with sqlite3.connect(database) as conn:
+            df = pd.read_sql_query(f"""
+                    SELECT a.id, a.is_human, a.answer
+                    FROM answers AS a
+                    ORDER BY a.id
+            """, conn)
+    except sqlite3.Error as e:
+        logger.error(e)
+        sys.exit(1)
+
     df['answer'] = df['answer'].apply(process_text)
 
     return df

@@ -41,7 +41,7 @@ We also provide an interface to run your own detector.
 You can create the environment using [conda](https://www.anaconda.com/docs/getting-started/miniconda/install).
 
 ```bash
-conda env create -f environment. yaml
+conda env create -f environment.yaml
 conda activate AssessingLLMTextDetection
 ```
 

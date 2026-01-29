@@ -3,6 +3,7 @@ import unittest
 
 import numpy as np
 import pandas as pd
+from matplotlib import pyplot as plt
 from sklearn.metrics import roc_curve, f1_score, accuracy_score, auc, precision_recall_curve
 from sklearn.model_selection import train_test_split, KFold
 
@@ -32,24 +33,54 @@ def filter_and_get_roc_auc(sub_df, prompt_mode):
 
     return get_roc_auc(filtered_df)
 
+def filter_and_get_tpr_at_fpr(sub_df, prompt_mode, target_fpr=0.05):
+    """
+    Filter DataFrame based on prompt_mode and return ROC-AUC score.
+    """
+    if prompt_mode == "human":
+        return None
+
+    if sub_df[sub_df['prompt_mode'] == prompt_mode].is_human.all():
+        filtered_df = sub_df[(sub_df['prompt_mode'] == prompt_mode) | (sub_df['prompt_mode'] == "task")]
+    else:
+        filtered_df = sub_df[(sub_df['prompt_mode'] == prompt_mode) | (sub_df['prompt_mode'] == "human")]
+
+    return get_tpr_at_fpr(filtered_df, target_fpr)
+
 
 def get_roc_auc(df):
     fpr, tpr, _ = roc_curve(~df['is_human'], df['prediction'])
     score = auc(fpr, tpr)
     # switch label if score is below 0.5
     if score < 0.5:
+        print("WARNING: Flipping true label in auc")
         fpr, tpr, _ = roc_curve(df['is_human'], df['prediction'])
         return auc(fpr, tpr)
     return score
 
+def get_tpr_at_fpr(df, target_fpr=0.05):
+    fpr, tpr, _ = roc_curve(~df['is_human'], df['prediction'])
+
+
+    if auc(fpr, tpr) < 0.5:
+        print("WARNING: Flipping true label in tpr")
+        fpr, tpr, _ = roc_curve(df['is_human'], df['prediction'])
+
+    # Interpolation: TPR bei exakt 0.05 FPR
+    return np.interp(target_fpr, fpr, tpr)
+
 
 def get_pr_auc(df):
     fpr, tpr, _ = roc_curve(~df['is_human'], df['prediction'])
+
+    precision, recall, _ = precision_recall_curve(~df['is_human'], df['prediction'])
+
     score = auc(fpr, tpr)
     # switch label if score is below 0.5
     if score < 0.5:
+        print("WARNING: Flipping true label in pr_auc")
         precision, recall, _ = precision_recall_curve(df['is_human'], df['prediction'])
-    precision, recall, _ = precision_recall_curve(~df['is_human'], df['prediction'])
+
     return auc(recall, precision)
 
 
@@ -182,7 +213,7 @@ def select_best_roberta_checkpoint(df, dataset_column_name="name"):
             |
             ((df[dataset_column_name] != 'argument-annotated-essays') &
              (df[
-                  'model_checkpoint'] == 'detectors/RoBERTa/checkpoints/argument-annotated-essays/binary/checkpoint-123'))
+                  'model_checkpoint'] == 'detectors/RoBERTa/checkpoints/argument-annotated-essays/binary/checkpoint-62'))
     )
     mask = not_roberta | roberta
 

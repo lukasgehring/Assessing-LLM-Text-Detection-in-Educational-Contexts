@@ -7,7 +7,7 @@ import seaborn as sns
 
 from database.interface import get_predictions
 from evaluation.utils import get_data, remove_rows_by_condition, select_best_roberta_checkpoint, get_roc_auc, set_label, compute_mean_std, get_pr_auc, map_dipper_to_generative_model, \
-    filter_and_get_roc_auc, highlight_max
+    filter_and_get_roc_auc, highlight_max, filter_and_get_tpr_at_fpr
 from evaluation.utils import remove_job_id_from_prompt_mode
 
 sns.set_theme(context="paper", style=None, font_scale=1, rc={
@@ -160,7 +160,7 @@ def catplot():
 
     plt.savefig("plots/results_overview.pdf", format="pdf")
 
-    # plt.show()
+    plt.show()
 
 
 def detector_overview():
@@ -175,7 +175,8 @@ def detector_overview():
     df = select_best_roberta_checkpoint(df)
 
     df = remove_rows_by_condition(df, conditions={
-        "prompt_mode": "task+resource"
+        "prompt_mode": "task+resource",
+        "detector": ["gpt-zero", "intrinsic-dim"]
     })
 
     # set human label of improve and rewrite-human
@@ -188,22 +189,80 @@ def detector_overview():
     for (detector,), sub_df in df.groupby(['detector']):
         for prompt_mode in sub_df.prompt_mode.unique():
             roc_auc = filter_and_get_roc_auc(sub_df, prompt_mode)
+            tpr = filter_and_get_tpr_at_fpr(sub_df, prompt_mode, target_fpr=0.05)
             if roc_auc is not None:
                 results.append({
                     "detector": detector,
                     "prompt_mode": prompt_mode,
-                    "roc_auc": roc_auc
+                    "roc_auc": roc_auc,
+                    "tpr": tpr,
                 })
-        results.append({
-            "detector": detector,
-            "prompt_mode": "all",
-            "roc_auc": get_roc_auc(sub_df)
-        })
+
     df = pd.DataFrame(results)
+
+    table = (
+        df
+        .pivot_table(
+            index="detector",
+            columns="prompt_mode",
+            values=["roc_auc", "tpr"]
+        )
+    )
+
+    table = table.swaplevel(0, 1, axis=1).sort_index(axis=1)
+
+    order = ["improve-human", "rewrite-human", "summary", "task+summary", "task", "rewrite-llm", "dipper"]
+    table = table[order]
+
+    table.columns = pd.MultiIndex.from_tuples(
+        [(p, "AUC" if m == "roc_auc" else "TPR") for p, m in table.columns]
+    )
+
+    human_cols = table["task"].copy()
+
+    human_cols.columns = pd.MultiIndex.from_product([["human"], human_cols.columns])
+
+    table = pd.concat([human_cols, table], axis=1)
+
+    rename_map = {
+        "human": "Human",
+        "improve-human": r"\makecell[b]{Improve\\Human}",
+        "rewrite-human": r"\shortstack{Rewrite\\Human}",
+        "summary": "Summary",
+        "task+summary": r"\shortstack{Task\\Summary}",
+        "task": "Task",
+        "rewrite-llm": r"\shortstack{Rewrite\\LLM}",
+        "dipper": "Humanize",
+    }
+
+    table = table.rename(columns=rename_map, level=0)
+
+    row_rename_map = {
+        "detect-gpt": "DetectGPT",
+        "fast-detect-gpt": "Fast-DetectGPT",
+        "ghostbuster": "Ghostbuster",
+        "roberta": "RoBERTa",
+    }
+
+    table = table.rename(index=row_rename_map)
+
+    latex = table.to_latex(
+        multicolumn=True,
+        multicolumn_format="l|",
+        column_format="l | cc | cc | cc | cc | cc | cc | cc | cc",
+        float_format=lambda x: f"{x:.3f}".lstrip("0"),
+    )
+
+    print(latex)
+
+    return
+
+    # Reihenfolge der Ebenen tauschen: prompt zuerst, dann auc/tpr
+    table = table.swaplevel(0, 1, axis=1).sort_index(axis=1)
 
     # create pivot dataframe
     df_pivot = df.pivot(index='detector', columns='prompt_mode', values='roc_auc')
-    order = ["improve-human", "rewrite-human", "summary", "task+summary", "task", "rewrite-llm", "dipper", "all"]
+
     df_pivot = df_pivot[order]
     df_pivot.index.name = None
 
@@ -216,5 +275,5 @@ def detector_overview():
 
 
 if __name__ == '__main__':
-    catplot()
+    # catplot()
     detector_overview()

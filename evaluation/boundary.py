@@ -6,7 +6,7 @@ from sklearn.metrics import roc_auc_score
 
 from database.interface import get_predictions
 from evaluation.metrics import get_roc_curve
-from evaluation.utils import select_best_roberta_checkpoint, remove_rows_by_condition, map_dipper_to_generative_model
+from evaluation.utils import select_best_roberta_checkpoint, remove_rows_by_condition, map_dipper_to_generative_model, set_label, get_roc_auc, get_tpr_at_fpr
 
 sns.set_theme(context="paper", style=None, font_scale=1, rc={
     # lines
@@ -35,37 +35,18 @@ def compute_boundary_comparison(detector=None):
     df = select_best_roberta_checkpoint(df)
     df = remove_rows_by_condition(df, conditions={
         "prompt_mode": "task+resource",
-        # "detector": "intrinsic-dim",
+        "detector": "intrinsic-dim",
     })
 
-    df = df.apply(map_dipper_to_generative_model, axis=1)
-
-    df['generative_model'] = df['generative_model'].fillna("human")
-
-    df['prompt_mode'] = df['prompt_mode'].replace({
-        "improve-human": "Improved-\nHuman",
-        "rewrite-human": "Rewrite-\nHuman",
-        "human": "Human",
-        "task": "Task",
-        "summary": "Summary",
-        "task+summary": "Task+\nSummary",
-    }, regex=False)
-    df['prompt_mode'] = df['prompt_mode'].replace(r"^rewrite-\d+$", "Rewrite-LLM", regex=True)
-    df['prompt_mode'] = df['prompt_mode'].replace(r"^dipper-\d+$", "Dipper", regex=True)
-
-    df['generative_model'] = df['generative_model'].replace({
-        "meta-llama/Llama-3.3-70B-Instruct": "Llama-3.3-70B-Instruct",
-        "gpt-4o-mini-2024-07-18": "GPT-4o-mini",
-        "human": "Human",
-    }, regex=False)
-
-    desired_order = ["Human", "Improved-\nHuman", "Rewrite-\nHuman", "Summary", "Task+\nSummary", "Task", "Rewrite-LLM",
-                     "Dipper"]
+    desired_order = ["human", "improve-human", "rewrite-human", "summary", "task+summary"]
 
     data = []
     auc_scores = []
     for detector, sub_df in df.groupby("detector"):
-        for mode in desired_order[:5]:
+        for mode in desired_order:
+            if mode != "human":
+                set_label(sub_df, mode)
+
             sub_df['is_human'] = sub_df['is_human'] | (sub_df['prompt_mode'] == mode)
 
             fpr, tpr, _ = get_roc_curve(sub_df, drop_intermediate=True)
@@ -78,7 +59,8 @@ def compute_boundary_comparison(detector=None):
 
             auc_scores.append({
                 'detector': detector,
-                'roc_auc': roc_auc_score(~sub_df['is_human'], sub_df['prediction'], sample_weight=sub_df['weights']),
+                'roc_auc': get_roc_auc(sub_df),
+                'tpr': get_tpr_at_fpr(sub_df, target_fpr=0.05),
                 'mode': f"{model_label}"
             })
 
@@ -101,6 +83,60 @@ def boundary_comparison():
 
     df_pivot = df_auc.pivot(values='roc_auc', index=['mode'], columns=['detector'])
     print(df_pivot.to_latex(header=True, index=True, float_format='%.3f'))
+
+    table = (
+        df_auc
+        .pivot_table(
+            index="mode",
+            columns="detector",
+            values=["roc_auc", "tpr"]
+        )
+    )
+
+    table = table.swaplevel(0, 1, axis=1).sort_index(axis=1)
+
+    #order = ["improve-human", "rewrite-human", "summary", "task+summary", "task", "rewrite-llm", "dipper"]
+    #table = table[order]
+
+    table.columns = pd.MultiIndex.from_tuples(
+        [(p, "AUC" if m == "roc_auc" else "TPR") for p, m in table.columns]
+    )
+
+    #human_cols = table["task"].copy()
+
+    #human_cols.columns = pd.MultiIndex.from_product([["human"], human_cols.columns])
+
+    #table = pd.concat([human_cols, table], axis=1)
+
+    row_rename_map = {
+        "human": "Human",
+        "improve-human": "Improve-Human",
+        "rewrite-human": "Rewrite-Human",
+        "summary": "Summary",
+        "task+summary": "Task+Summary",
+    }
+    table = table.rename(index=row_rename_map)
+
+    col_rename_map = {
+        "detect-gpt": "DetectGPT",
+        "fast-detect-gpt": "Fast-DetectGPT",
+        "ghostbuster": "Ghostbuster",
+        "roberta": "RoBERTa",
+    }
+    table = table.rename(columns=col_rename_map, level=0)
+
+
+
+    latex = table.to_latex(
+        multicolumn=True,
+        multicolumn_format="l|",
+        column_format="l | cc | cc | cc | cc ",
+        float_format=lambda x: f"{x:.3f}".lstrip("0"),
+    )
+
+    print(latex)
+
+    return
 
     grid = sns.FacetGrid(df, col="detector", hue="mode", height=2.5, aspect=1, sharex=False, sharey=False, col_wrap=2,
                          legend_out=False)
