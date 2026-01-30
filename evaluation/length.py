@@ -128,7 +128,7 @@ g1 = sns.lineplot(
     **marker_style
 )
 axes[1].set_xlabel("Maximum Number of Words")
-axes[1].set_ylabel(f"TPR @ FPR={target_fpr:.2f}")
+axes[1].set_ylabel(f"TPR@5%FPR")
 axes[1].grid(True, which="major", linestyle="-", linewidth=0.75, alpha=0.25, zorder=0)
 axes[1].set_xticks([50, 100, 150, 200, 250, 300])
 

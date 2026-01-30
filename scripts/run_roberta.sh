@@ -1,6 +1,12 @@
 #!/bin/bash
 
-mapfile -t PARAMS < <(cat params/aae/roberta.txt params/bawe/roberta.txt params/persuade/roberta.txt | grep -vE '^\s*$')
+mapfile -t PARAMS < <(
+    cat \
+      params/aae/roberta_local.txt \
+      params/bawe/roberta_local.txt \
+      params/persuade/roberta_local.txt \
+    | grep -vE '^\s*$'
+)
 
 cd ../ || exit
 

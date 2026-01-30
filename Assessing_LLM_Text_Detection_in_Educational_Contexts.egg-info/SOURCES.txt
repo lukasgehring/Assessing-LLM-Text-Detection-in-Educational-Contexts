@@ -1,0 +1,11 @@
+README.md
+setup.py
+Assessing_LLM_Text_Detection_in_Educational_Contexts.egg-info/PKG-INFO
+Assessing_LLM_Text_Detection_in_Educational_Contexts.egg-info/SOURCES.txt
+Assessing_LLM_Text_Detection_in_Educational_Contexts.egg-info/dependency_links.txt
+Assessing_LLM_Text_Detection_in_Educational_Contexts.egg-info/top_level.txt
+database/__init__.py
+database/add_aae_to_database.py
+database/export_to_csv.py
+database/interface.py
+database/remove_aae_from_db.py
