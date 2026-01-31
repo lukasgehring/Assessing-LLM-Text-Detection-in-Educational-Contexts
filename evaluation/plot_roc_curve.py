@@ -62,6 +62,10 @@ def plot_rocs(
         outfile=None,
         legend=True,
         legend_ncol=4,
+        ncols=None,
+        nrows=None,
+        panel_size=(3.0, 3.2),
+        legend_anchor_bottom=0.15
 ):
     """
     Plottet ROC-Kurven aus einem *long* DataFrame:
@@ -79,8 +83,18 @@ def plot_rocs(
         group_order = list(roc_df[group_col].dropna().unique())
 
     n_panels = len(facet_order)
+
+    if ncols is None and nrows is None:
+        ncols = n_panels  # altes Verhalten: 1 Zeile
+        nrows = 1
+    elif ncols is None:
+        ncols = int(np.ceil(n_panels / nrows))
+    elif nrows is None:
+        nrows = int(np.ceil(n_panels / ncols))
+
     if figsize is None:
-        figsize = (3.0 * n_panels, 3.2)
+        w, h = panel_size
+        figsize = (w * ncols, h * nrows)
 
     # Farben + Linestyles stabil zuordnen
     custom_palette = ["#E69F00", "#0072B2", "#009E73", "#D55E00"]
@@ -102,7 +116,8 @@ def plot_rocs(
             .apply(lambda x: x.iloc[::downsample_step])
         )
 
-    fig, axes = plt.subplots(1, n_panels, figsize=figsize, sharex=True, sharey=True)
+    fig, axes = plt.subplots(nrows, ncols, figsize=figsize, sharex=True, sharey=True)
+    axes = np.atleast_1d(axes).ravel()
     if n_panels == 1:
         axes = [axes]
 
@@ -151,7 +166,14 @@ def plot_rocs(
             ax.set_xticks([xlim[0], (xlim[0] + xlim[1]) / 2, xlim[1]])
         ax.set_yticks([0, 0.5, 1.0])
 
-    axes[0].set_ylabel("True Positive Rate")
+    for ax in axes[len(facet_order):]:
+        ax.set_visible(False)
+
+    for ax_idx in range(len(axes)):
+        if ax_idx % ncols == 0:
+            first_ax = axes[ax_idx]
+            first_ax.set_ylabel("True Positive Rate")
+
     for ax in axes:
         ax.set_xlabel("False Positive Rate")
 
@@ -161,13 +183,16 @@ def plot_rocs(
             fig.legend(
                 handles, labels,
                 loc="upper center",
-                bbox_to_anchor=(0.5, 0.15),
+                bbox_to_anchor=(0.5, legend_anchor_bottom),
                 ncol=min(legend_ncol, len(labels)),
                 frameon=False,
             )
 
     plt.tight_layout()
-    plt.subplots_adjust(left=0.06, right=0.98, bottom=0.32 if legend else 0.12, top=0.9, wspace=0.2)
+    bottom = 0.18 if (legend and nrows > 1) else (0.32 if legend else 0.12)
+    plt.subplots_adjust(left=0.06, right=0.98, bottom=bottom, top=0.9, wspace=0.2, hspace=0.35)
+
+    # plt.subplots_adjust(left=0.06, right=0.98, bottom=0.32 if legend else 0.12, top=0.9, wspace=0.2)
 
     if outfile:
         plt.savefig(outfile)

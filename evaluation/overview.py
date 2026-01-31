@@ -1,175 +1,45 @@
-import re
-
+import numpy as np
 import pandas as pd
-from matplotlib import pyplot as plt
-from sklearn.metrics import roc_curve, auc
-import seaborn as sns
 
 from database.interface import get_predictions
-from evaluation.utils import get_data, remove_rows_by_condition, select_best_roberta_checkpoint, get_roc_auc, set_label, compute_mean_std, get_pr_auc, map_dipper_to_generative_model, \
-    filter_and_get_roc_auc, highlight_max, filter_and_get_tpr_at_fpr
+from evaluation.metrics import get_roc_curve
+from evaluation.plot_roc_curve import apply_paper_style, plot_rocs
+from evaluation.utils import remove_rows_by_condition, select_best_roberta_checkpoint, set_label, filter_and_get_roc_auc, filter_and_get_tpr_at_fpr, get_roc_auc, get_tpr_at_fpr
 from evaluation.utils import remove_job_id_from_prompt_mode
 
-sns.set_theme(context="paper", style=None, font_scale=1, rc={
-    # lines
-    "lines.linewidth": 2,
+PROMPT_ORDER = ["improve-human", "rewrite-human", "summary", "task+summary", "task", "rewrite-llm", "dipper"]
 
-    # grid
-    "grid.linewidth": .5,
+PROMPT_LABEL = {
+    "human": "Human",
+    "improve-human": r"\makecell[b]{Improve\\Human}",
+    "rewrite-human": r"\shortstack{Rewrite\\Human}",
+    "summary": "Summary",
+    "task+summary": r"\shortstack{Task\\Summary}",
+    "task": "Task",
+    "rewrite-llm": r"\shortstack{Rewrite\\LLM}",
+    "dipper": "Humanize",
+}
 
-    # legend
-    'legend.handletextpad': .5,
-    'legend.handlelength': 1.0,
-    'legend.labelspacing': 0.5,
-    "legend.loc": "upper center",
+PROMPT_LABEL_PLOT = {
+    "human": "Human",
+    "improve-human": "Improve-Human",
+    "rewrite-human": "Rewrite-Human",
+    "summary": "Summary",
+    "task+summary": "Task+Summary",
+    "task": "Task",
+    "rewrite-llm": "Rewrite-LLM",
+    "dipper": "Humanize",
+}
 
-    # yticks
-    'ytick.minor.visible': True,
-    'ytick.minor.width': 0.4,
-
-    # save
-    'savefig.format': 'pdf'
-})
-
-
-def get_dataframe(generative_models):
-    results = []
-    for generative_model in generative_models:
-        df = get_data(generative_model=generative_model)
-
-        df = remove_rows_by_condition(df, conditions={
-            "name": "mixed",
-            "detector": "gpt-zero"
-        })
-
-        for i, ((dataset, detector), sub_df) in enumerate(df.groupby(["name", "detector"])):
-            if detector == "roberta":
-                sub_df = select_best_roberta_checkpoint(sub_df)
-
-            for prompt_mode in [pm for pm in sub_df['prompt_mode'].unique() if
-                                pm != "human" and pm != "" and pm != "task+resource"]:
-
-                # set improve-human to is_human and load task as llm text
-                if prompt_mode == "improve-human":
-                    filtered_df = sub_df[(sub_df['prompt_mode'] == prompt_mode) | (sub_df['prompt_mode'] == "task")]
-                    filtered_df.loc[sub_df['prompt_mode'] == prompt_mode, 'is_human'] = True
-                else:
-                    filtered_df = sub_df[(sub_df['prompt_mode'] == prompt_mode) | (sub_df['is_human'] == True)]
-
-                # compute roc curve and auc
-                fpr, tpr, _ = roc_curve(~filtered_df['is_human'], filtered_df['prediction'])
-                roc_auc = auc(fpr, tpr)
-
-                model_short = "GPT-4o-mini" if "gpt-4o" in generative_model else "LLaMA-3.3-70B-Instruct"
-
-                results.append({
-                    "Model": model_short,
-                    "Dataset": dataset,
-                    "Prompt Mode": prompt_mode,
-                    "Detector": detector,
-                    "ROC-AUC": f"{roc_auc:.3f}",
-                    "FPR": fpr,
-                })
-
-    df_results = pd.DataFrame(results)
-
-    df_results['Detector'] = df_results['Detector'].replace(
-        ["detect-gpt", "intrinsic-dim", "ghostbuster", "roberta", "fast-detect-gpt"],
-        ["DetectGPT", "Intrinsic-Dim", "Ghostbuster", "RoBERTa", "Fast-DetectGPT"]
-    )
-
-    df_results['Dataset'] = df_results['Dataset'].replace(
-        ["persuade", "argument-annotated-essays"],
-        ["PERSUADE", "AAE"]
-    )
-
-    df_results['Prompt Mode'] = df_results['Prompt Mode'].replace(to_replace=r'^dipper-\d+$', value='dipper',
-                                                                  regex=True)
-    df_results['Prompt Mode'] = df_results['Prompt Mode'].replace(to_replace=r'^rewrite-\d+$', value='rewrite',
-                                                                  regex=True)
-    df_results['ROC-AUC'] = pd.to_numeric(df_results['ROC-AUC'], errors='coerce')
-    return df_results
+DETECTOR_LABEL = {
+    "detect-gpt": "DetectGPT",
+    "fast-detect-gpt": "Fast-DetectGPT",
+    "ghostbuster": "Ghostbuster",
+    "roberta": "RoBERTa",
+}
 
 
-def catplot():
-    df = get_predictions(max_words=-1)
-    df = select_best_roberta_checkpoint(df)
-    df = remove_rows_by_condition(df, conditions={
-        "prompt_mode": "task+resource"
-    })
-
-    # make sure, to load the correct dipper results
-    df = df.apply(map_dipper_to_generative_model, axis=1)
-
-    # set human label of improve and rewrite-human
-    set_label(df)
-
-    # rewrite job_id from rewrite-llm and dipper
-    remove_job_id_from_prompt_mode(df)
-
-    results = []
-    for generative_model in ['gpt-4o-mini-2024-07-18', 'meta-llama/Llama-3.3-70B-Instruct']:
-        gen_df = df[df['generative_model'].isin([generative_model, 'human'])]
-        for (detector, dataset), sub_df in gen_df.groupby(['detector', 'name']):
-            for prompt_mode in sub_df.prompt_mode.unique():
-                roc_auc = filter_and_get_roc_auc(sub_df, prompt_mode)
-                if roc_auc is not None:
-                    results.append({
-                        "detector": detector,
-                        "prompt_mode": prompt_mode,
-                        "dataset": dataset,
-                        "model": generative_model,
-                        "roc_auc": roc_auc
-                    })
-
-    df = pd.DataFrame(results)
-
-    df.sort_values(by=['model', 'dataset', 'detector'], inplace=True)
-
-    df['mixed'] = df['dataset'] + ' - ' + df['detector'] + ' - ' + df['prompt_mode']
-
-    grid = sns.FacetGrid(df, col='model', height=4, aspect=1.4, sharex=False)
-
-    detector_order = df['detector'].unique()
-
-    grid.map_dataframe(sns.scatterplot, 'mixed', 'roc_auc', 'detector', style="prompt_mode", hue="detector",
-                       zorder=2, s=80, alpha=0.8, hue_order=detector_order)
-
-    grid.add_legend(bbox_to_anchor=(1, 0.525), loc='center right', borderaxespad=0.)
-
-    for ax in grid.axes.flat:
-        xticklabels = ax.get_xticklabels()
-        labels = [label.get_text().split(' | ')[0] for label in xticklabels]
-
-        new_labels = [label.split(" - ")[0] for i, label in enumerate(labels) if i % 35 == 0]
-
-        ax.set_xticks([17, 52, 87])
-        ax.set_xticklabels(new_labels)
-
-        ax.axvline(x=34.5, color='gray', linestyle='--', zorder=1)
-        ax.axvline(x=69.5, color='gray', linestyle='--', zorder=1)
-
-    grid.set_xlabels("Dataset")
-    grid.set_titles("{col_name}")
-
-    grid.set(ylim=(0.5, 1.05))
-
-    plt.tight_layout(rect=[0, 0, 0.87, 1])
-    for ax in grid.axes.flatten():
-        ax.grid()
-
-    plt.savefig("plots/results_overview.pdf", format="pdf")
-
-    plt.show()
-
-
-def detector_overview():
-    """
-    Overview of the ROC-AUC of all detectors for each prompt mode over all datasets.
-
-    Output: Latex Table
-    """
-
+def compute_contribution_level_comparison(target_fpr=0.05):
     # get all predictions and choose best robate model
     df = get_predictions(max_words=-1)
     df = select_best_roberta_checkpoint(df)
@@ -185,95 +55,112 @@ def detector_overview():
     # rewrite job_id from rewrite-llm and dipper
     remove_job_id_from_prompt_mode(df)
 
-    results = []
-    for (detector,), sub_df in df.groupby(['detector']):
+    roc_frames = []
+    metric_rows = []
+    for detector_name, sub_df in df.groupby('detector', sort=False):
         for prompt_mode in sub_df.prompt_mode.unique():
-            roc_auc = filter_and_get_roc_auc(sub_df, prompt_mode)
-            tpr = filter_and_get_tpr_at_fpr(sub_df, prompt_mode, target_fpr=0.05)
-            if roc_auc is not None:
-                results.append({
-                    "detector": detector,
+
+            if prompt_mode == "human":
+                continue
+
+            if sub_df[sub_df['prompt_mode'] == prompt_mode].is_human.all():
+                filtered_df = sub_df[(sub_df['prompt_mode'] == prompt_mode) | (sub_df['prompt_mode'] == "task")]
+            else:
+                filtered_df = sub_df[(sub_df['prompt_mode'] == prompt_mode) | (sub_df['prompt_mode'] == "human")]
+
+            metric_rows.append(
+                {
+                    "detector": detector_name,
                     "prompt_mode": prompt_mode,
-                    "roc_auc": roc_auc,
-                    "tpr": tpr,
-                })
+                    "roc_auc": get_roc_auc(filtered_df),
+                    "tpr": get_tpr_at_fpr(filtered_df, target_fpr=target_fpr),
+                }
+            )
 
-    df = pd.DataFrame(results)
+            fpr, tpr, _ = get_roc_curve(filtered_df, drop_intermediate=True)
 
-    table = (
-        df
-        .pivot_table(
-            index="detector",
-            columns="prompt_mode",
-            values=["roc_auc", "tpr"]
-        )
-    )
+            roc_frames.append(
+                pd.DataFrame(
+                    {
+                        "detector": detector_name,
+                        "prompt_mode": prompt_mode,
+                        "fpr": fpr,
+                        "tpr": tpr,
+                    }
+                )
+            )
 
-    table = table.swaplevel(0, 1, axis=1).sort_index(axis=1)
+    roc_df = pd.concat(roc_frames, ignore_index=True) if roc_frames else pd.DataFrame()
+    metrics_df = pd.DataFrame(metric_rows)
 
-    order = ["improve-human", "rewrite-human", "summary", "task+summary", "task", "rewrite-llm", "dipper"]
-    table = table[order]
+    return roc_df, metrics_df
 
+
+def _make_latex_table(metrics_df):
+    table = metrics_df.pivot_table(
+        index="detector",
+        columns="prompt_mode",
+        values=["roc_auc", "tpr"]
+    ).swaplevel(0, 1, axis=1).sort_index(axis=1)
+
+    table = table[PROMPT_ORDER]
+
+    # (prompt_mode, metric) -> (prompt_mode, AUC/TPR)
     table.columns = pd.MultiIndex.from_tuples(
         [(p, "AUC" if m == "roc_auc" else "TPR") for p, m in table.columns]
     )
 
+    # copy task and set to human
     human_cols = table["task"].copy()
-
     human_cols.columns = pd.MultiIndex.from_product([["human"], human_cols.columns])
-
     table = pd.concat([human_cols, table], axis=1)
 
-    rename_map = {
-        "human": "Human",
-        "improve-human": r"\makecell[b]{Improve\\Human}",
-        "rewrite-human": r"\shortstack{Rewrite\\Human}",
-        "summary": "Summary",
-        "task+summary": r"\shortstack{Task\\Summary}",
-        "task": "Task",
-        "rewrite-llm": r"\shortstack{Rewrite\\LLM}",
-        "dipper": "Humanize",
-    }
+    table = table.rename(columns=PROMPT_LABEL, level=0)
+    table = table.rename(index=DETECTOR_LABEL)
 
-    table = table.rename(columns=rename_map, level=0)
-
-    row_rename_map = {
-        "detect-gpt": "DetectGPT",
-        "fast-detect-gpt": "Fast-DetectGPT",
-        "ghostbuster": "Ghostbuster",
-        "roberta": "RoBERTa",
-    }
-
-    table = table.rename(index=row_rename_map)
-
-    latex = table.to_latex(
+    return table.to_latex(
         multicolumn=True,
         multicolumn_format="l|",
         column_format="l | cc | cc | cc | cc | cc | cc | cc | cc",
         float_format=lambda x: f"{x:.3f}".lstrip("0"),
     )
 
-    print(latex)
 
-    return
+def detector_overview(target_fpr=0.05):
+    """
+    Overview of the ROC-AUC of all detectors for each prompt mode over all datasets.
 
-    # Reihenfolge der Ebenen tauschen: prompt zuerst, dann auc/tpr
-    table = table.swaplevel(0, 1, axis=1).sort_index(axis=1)
+    Output: Latex Table
+    """
+    roc_df, metrics_df = compute_contribution_level_comparison(target_fpr=target_fpr)
 
-    # create pivot dataframe
-    df_pivot = df.pivot(index='detector', columns='prompt_mode', values='roc_auc')
+    if metrics_df.empty:
+        print("No results to display.")
+        return
 
-    df_pivot = df_pivot[order]
-    df_pivot.index.name = None
+    print(_make_latex_table(metrics_df))
 
-    # df_pivot['mean'] = df_pivot.mean(axis=1)
-    with pd.option_context('display.max_columns', None):
-        print(df_pivot)
-    # create latex table
-    latex_table = highlight_max(df_pivot).to_latex(index=True, float_format="%.2f", column_format='lcccccccc', escape=False)
-    print(latex_table)
+    roc_df = roc_df.copy()
+    roc_df["detector"] = roc_df["detector"].map(DETECTOR_LABEL).fillna(roc_df["detector"])
+    roc_df["prompt_mode"] = roc_df["prompt_mode"].map(PROMPT_LABEL_PLOT).fillna(roc_df["prompt_mode"])
+
+    apply_paper_style()
+    plot_rocs(
+        roc_df,
+        group_col="detector",
+        facet_col="prompt_mode",
+        group_order=["DetectGPT", "Fast-DetectGPT", "Ghostbuster", "RoBERTa"],
+        facet_order=["Improve-Human", "Rewrite-Human", "Summary", "Task+Summary", "Task", "Rewrite-LLM", "Humanize"],
+        downsample_step=10,
+        xscale="linear",
+        xlim=(0, 1),
+        ylim=(0, 1.02),
+        outfile="plots/contribution_levels_rocs.pdf",
+        figsize=(13 / 2.904, 7.5 / 2.904),
+        nrows=2,
+        legend_anchor_bottom=0.1
+    )
 
 
 if __name__ == '__main__':
-    # catplot()
     detector_overview()
