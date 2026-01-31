@@ -1,152 +1,28 @@
-from itertools import product
-
 import pandas as pd
-from matplotlib import pyplot as plt
-from sklearn.metrics import roc_auc_score
-
-import seaborn as sns
 
 from database.interface import get_predictions
-from evaluation.utils import remove_rows_by_condition, get_data, select_best_roberta_checkpoint, \
-    map_dipper_to_generative_model, set_label, remove_job_id_from_prompt_mode, filter_and_get_roc_auc, \
-    get_roc_auc, highlight_max, get_tpr_at_fpr
+from evaluation.metrics import get_roc_curve
+from evaluation.plot_roc_curve import apply_paper_style, plot_rocs
+from evaluation.utils import remove_rows_by_condition, select_best_roberta_checkpoint, map_dipper_to_generative_model, set_label, remove_job_id_from_prompt_mode, get_roc_auc, get_tpr_at_fpr
 
-sns.set_theme(context="paper", style=None, font_scale=1, rc={
-    # grid
-    "grid.linewidth": .5,
+DETECTOR_LABEL = {
+    "detect-gpt": "DetectGPT",
+    "fast-detect-gpt": "Fast-DetectGPT",
+    "ghostbuster": "Ghostbuster",
+    "roberta": "RoBERTa",
+}
 
-    # legend
-    'legend.handletextpad': .5,
-    'legend.handlelength': 1.0,
-    # 'legend.labelspacing': 0.5,
-    # "legend.loc": "upper center",
-
-    # axes
-    'axes.spines.right': False,
-    'axes.spines.top': False,
-
-    # yticks
-    'ytick.minor.visible': True,
-    'ytick.minor.width': 0.4,
-
-    # save
-    'savefig.format': 'pdf'
-})
+GEN_MODEL_LABEL_PLOT = {
+    "gpt-4o-mini-2024-07-18": "GPT-4o-mini",
+    "meta-llama/Llama-3.3-70B-Instruct": "Llama-3.3-70b",
+    "Both": "Both"
+}
 
 
-def prompt_mode_performance():
-    df = get_predictions(max_words=-1)
-    df = select_best_roberta_checkpoint(df)
-    df = remove_rows_by_condition(df, conditions={
-        "prompt_mode": "task+resource"
-    })
-
-    # make sure, to load the correct dipper results
-    df = df.apply(map_dipper_to_generative_model, axis=1)
-
-    # set human label of improve and rewrite-human
-    set_label(df)
-
-    # rewrite job_id from rewrite-llm and dipper
-    remove_job_id_from_prompt_mode(df)
-
-    results = []
-    for generative_model in ['gpt-4o-mini-2024-07-18', 'meta-llama/Llama-3.3-70B-Instruct']:
-        gen_df = df[df['generative_model'].isin([generative_model, 'human'])]
-        for (detector,), sub_df in gen_df.groupby(['detector']):
-            for prompt_mode in sub_df.prompt_mode.unique():
-                roc_auc = filter_and_get_roc_auc(sub_df, prompt_mode)
-                if roc_auc is not None:
-                    results.append({
-                        "detector": detector,
-                        "generative_model": generative_model,
-                        "prompt_mode": prompt_mode,
-                        "roc_auc": roc_auc
-                    })
-            results.append({
-                "detector": detector,
-                "generative_model": generative_model,
-                "prompt_mode": "all",
-                "roc_auc": get_roc_auc(sub_df)
-            })
-    df = pd.DataFrame(results)
-
-    def combine_roc(df):
-        # Aufteilen in GPT-Modelle und LLaMA-Modelle
-        gpt_df = df[df['generative_model'].str.contains("gpt", case=False)].copy()
-        llama_df = df[df['generative_model'].str.contains("llama", case=False)].copy()
-
-        # Relevante Spalten umbenennen
-        gpt_df = gpt_df[['detector', 'prompt_mode', 'roc_auc']].rename(columns={'roc_auc': 'roc_auc_gpt'})
-        llama_df = llama_df[['detector', 'prompt_mode', 'roc_auc']].rename(columns={'roc_auc': 'roc_auc_llama'})
-
-        # Mergen nach detector + prompt_mode
-        merged = pd.merge(gpt_df, llama_df, on=['detector', 'prompt_mode'], how='inner')
-
-        # Kombinieren der ROC-Werte als String
-        merged['roc_auc'] = merged['roc_auc_llama'] - merged['roc_auc_gpt']
-
-        # Nur gewünschte Spalten behalten
-        final_df = merged[['detector', 'prompt_mode', 'roc_auc']]
-        return final_df
-
-    df = combine_roc(df)
-
-    print(df)
-    df_wide = df.pivot(index='detector', columns='prompt_mode', values='roc_auc').reset_index()
-    df_wide = df_wide.set_index('detector')
-    order = ["improve-human", "rewrite-human", "summary", "task+summary", "task", "rewrite-llm", "dipper", "all"]
-    df_wide = df_wide[order]
-
-    latex_table = highlight_max(df_wide, add_sign=True).to_latex(
-        index=True,
-        header=True,
-        column_format="lcccccccc",
-        escape=False
-    )
-
-    print(latex_table)
-
-
-def generative_model_comparison():
-    df = get_predictions(max_words=-1)
-    df = select_best_roberta_checkpoint(df)
-    df = remove_rows_by_condition(df, conditions={"prompt_mode": "task+resource", "detector": "intrinsic-dim"})
-
-    df = df.apply(map_dipper_to_generative_model, axis=1)
-    set_label(df)
-    remove_job_id_from_prompt_mode(df)
-
-    results = []
-    for generative_model in ['gpt-4o-mini-2024-07-18', 'meta-llama/Llama-3.3-70B-Instruct']:
-        gen_df = df[df['generative_model'].isin([generative_model, 'human'])]
-        for (detector,), sub_df in gen_df.groupby(['detector']):
-            results.append({
-                "detector": detector,
-                "generative_model": generative_model,
-                "auc": get_roc_auc(sub_df),
-                "tpr": get_tpr_at_fpr(sub_df, target_fpr=0.05),
-            })
-
-    for (detector,), sub_df in df.groupby(['detector']):
-        results.append({
-            "detector": detector,
-            "generative_model": "Both",
-            "auc": get_roc_auc(sub_df),
-            "tpr": get_tpr_at_fpr(sub_df, target_fpr=0.05),
-        })
-
-    res_df = pd.DataFrame(results)
-
+def _make_latex_table(metrics_df):
     # Pivot: Zeilen = Detector, Spalten = (Modell, Metrik)
-    pivot = res_df.pivot(index="detector", columns="generative_model", values=["auc", "tpr"])
+    pivot = metrics_df.pivot(index="detector", columns="generative_model", values=["auc", "tpr"])
 
-    # Reihenfolge & schöne Namen
-    model_map = {
-        'gpt-4o-mini-2024-07-18': 'GPT-4o',
-        'meta-llama/Llama-3.3-70B-Instruct': 'Llama-3.3',
-        'Both': 'Both'
-    }
     model_order = ['gpt-4o-mini-2024-07-18', 'meta-llama/Llama-3.3-70B-Instruct', 'Both']
 
     pivot = pivot.loc[:, (["auc", "tpr"], model_order)]
@@ -182,10 +58,92 @@ def generative_model_comparison():
     lines.append(r"\end{tabular}")
 
     latex_table = "\n".join(lines)
-    print(latex_table)
+    return latex_table
 
+
+def compute_model_comparison():
+    df = get_predictions(max_words=-1)
+    df = select_best_roberta_checkpoint(df)
+    df = remove_rows_by_condition(df, conditions={"prompt_mode": "task+resource", "detector": "intrinsic-dim"})
+
+    df = df.apply(map_dipper_to_generative_model, axis=1)
+    set_label(df)
+    remove_job_id_from_prompt_mode(df)
+
+    roc_frames = []
+    metric_rows = []
+    for generative_model in ['gpt-4o-mini-2024-07-18', 'meta-llama/Llama-3.3-70B-Instruct']:
+        gen_df = df[df['generative_model'].isin([generative_model, 'human'])]
+        for detector_name, sub_df in gen_df.groupby('detector'):
+            metric_rows.append({
+                "detector": detector_name,
+                "generative_model": generative_model,
+                "auc": get_roc_auc(sub_df),
+                "tpr": get_tpr_at_fpr(sub_df, target_fpr=0.05),
+            })
+
+            fpr, tpr, _ = get_roc_curve(sub_df, drop_intermediate=True)
+            roc_frames.append(
+                pd.DataFrame(
+                    {
+                        "detector": detector_name,
+                        "generative_model": generative_model,
+                        "fpr": fpr,
+                        "tpr": tpr,
+                    }
+                )
+            )
+
+    for detector_name, sub_df in df.groupby('detector'):
+        metric_rows.append({
+            "detector": detector_name,
+            "generative_model": "Both",
+            "auc": get_roc_auc(sub_df),
+            "tpr": get_tpr_at_fpr(sub_df, target_fpr=0.05),
+        })
+
+        fpr, tpr, _ = get_roc_curve(sub_df, drop_intermediate=True)
+        roc_frames.append(
+            pd.DataFrame(
+                {
+                    "detector": detector_name,
+                    "generative_model": "Both",
+                    "fpr": fpr,
+                    "tpr": tpr,
+                }
+            )
+        )
+
+    roc_df = pd.concat(roc_frames, ignore_index=True) if roc_frames else pd.DataFrame()
+    metrics_df = pd.DataFrame(metric_rows)
+
+    return roc_df, metrics_df
+
+
+def model_comparison():
+    roc_df, metrics_df = compute_model_comparison()
+
+    print(_make_latex_table(metrics_df))
+
+    roc_df = roc_df.copy()
+    roc_df["detector"] = roc_df["detector"].map(DETECTOR_LABEL).fillna(roc_df["detector"])
+    roc_df["generative_model"] = roc_df["generative_model"].map(GEN_MODEL_LABEL_PLOT).fillna(roc_df["generative_model"])
+
+    apply_paper_style()
+    plot_rocs(
+        roc_df,
+        group_col="detector",
+        facet_col="generative_model",
+        group_order=["DetectGPT", "Fast-DetectGPT", "Ghostbuster", "RoBERTa"],
+        facet_order=["GPT-4o-mini", "Llama-3.3-70b", "Both"],
+        downsample_step=10,
+        xscale="linear",
+        xlim=(0, 1),
+        ylim=(0, 1.02),
+        outfile="plots/generative_model_rocs.pdf",
+        figsize=(13 / 2.904, 5 / 2.904),
+    )
 
 
 if __name__ == '__main__':
-    # prompt_mode_performance()
-    generative_model_comparison()
+    model_comparison()
