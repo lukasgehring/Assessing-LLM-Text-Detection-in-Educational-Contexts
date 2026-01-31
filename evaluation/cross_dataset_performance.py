@@ -6,102 +6,22 @@ import seaborn as sns
 from tqdm import tqdm
 
 from database.interface import get_predictions
+from evaluation.metrics import get_roc_curve
+from evaluation.plot_roc_curve import apply_paper_style, plot_rocs
 from evaluation.threshold import get_threshold
 from evaluation.utils import set_label, map_dipper_to_generative_model, remove_rows_by_condition, \
     remove_job_id_from_prompt_mode, get_roc_auc, get_tpr_at_fpr
 
-sns.set_theme(context="paper", style=None, font_scale=1, rc={
-    # lines
-    "lines.linewidth": 2,
-
-    # grid
-    # "grid.linewidth": .5,
-
-    # legend
-    'legend.handletextpad': .5,
-    'legend.handlelength': 1.0,
-    'legend.labelspacing': 0.5,
-
-    # axes
-    'axes.spines.right': False,
-    'axes.spines.top': False,
-
-    # yticks
-    'ytick.minor.visible': True,
-    'ytick.minor.width': 0.3,
-
-    # save
-    'savefig.format': 'pdf',
-
-    # font
-    "font.family": "Liberation Sans",
-    'font.size': 20,
-    'axes.titlesize': 20,
-    'axes.labelsize': 20,
-    'xtick.labelsize': 20,
-    'ytick.labelsize': 20,
-    'legend.fontsize': 20,
-    'figure.titlesize': 20
-})
+ROW_ORDER = ["RobertaAAE", "RobertaBAWE", "RobertaPERSUADE", "Ghostbuster", "DetectGPT", "FastDetectGPT"]
+COL_ORDER = ["AAE", "BAWE", "PERSUADE"]
 
 
-def roberta_checkpoint_comparison():
-    all_data = []
-
-    df = get_predictions(
-        database="../../database/database.db",
-        dataset=None,
-        is_human=None,
-        #detector="roberta",
-        max_words=-1,
-
-    )
-
-    df = remove_rows_by_condition(df, conditions={"prompt_mode": "task+resource", "detector": "intrinsic-dim"})
-    df = df.apply(map_dipper_to_generative_model, axis=1)
-    set_label(df)
-    remove_job_id_from_prompt_mode(df)
-    for (detector, name), sub_df in df.groupby(["detector", "name"]):
-
-        if detector == "roberta":
-            for (model_checkpoint,), sub_sub_df in sub_df.groupby(["model_checkpoint"]):
-                training_dataset = model_checkpoint.split("/")[3]
-                test_dataset = name
-                all_data.append({
-                    "Model": f"Roberta{training_dataset}",
-                    "Test Dataset": test_dataset,
-                    "auc": get_roc_auc(sub_sub_df),
-                    "tpr": get_tpr_at_fpr(sub_sub_df, target_fpr=0.05),
-                })
-        else:
-            test_dataset = name
-            all_data.append({
-                "Model": detector,
-                "Test Dataset": test_dataset,
-                "auc": get_roc_auc(sub_df),
-                "tpr": get_tpr_at_fpr(sub_df, target_fpr=0.05),
-            })
-
-
-
-
-
-
-
-    df_all = pd.DataFrame(all_data)
-    df_all.replace({"argument-annotated-essays": "AAE", "persuade": "PERSUADE"}, inplace=True)
-    df_all.replace({"Robertaargument-annotated-essays": "RobertaAAE", "Robertapersuade": "RobertaPERSUADE"}, inplace=True)
-    df_all.replace({"detect-gpt": "DetectGPT", "fast-detect-gpt": "FastDetectGPT", "ghostbuster":"Ghostbuster"}, inplace=True)
-    #df_all["Model"] = "Roberta" + df_all["Training Dataset"]
-
-    row_order = ["RobertaAAE", "RobertaBAWE", "RobertaPERSUADE", "Ghostbuster", "DetectGPT", "FastDetectGPT"]
-    col_order = ["AAE", "BAWE", "PERSUADE"]
-
+def _make_latex_table(metrics_df):
     # MultiIndex columns: (Testset, Metric)
-    pivot = df_all.pivot(index="Model", columns="Test Dataset", values=["auc", "tpr"])
+    pivot = metrics_df.pivot(index="Model", columns="Test Dataset", values=["auc", "tpr"])
     # Umordnen zu (Testset, Metric) statt (Metric, Testset)
     pivot = pivot.swaplevel(0, 1, axis=1).sort_index(axis=1, level=0)
-    pivot = pivot.reindex(index=row_order, columns=pd.MultiIndex.from_product([col_order, ["auc", "tpr"]]))
+    pivot = pivot.reindex(index=ROW_ORDER, columns=pd.MultiIndex.from_product([COL_ORDER, ["auc", "tpr"]]))
     pivot = pivot.round(3)
 
     def fmt(x):
@@ -116,93 +36,106 @@ def roberta_checkpoint_comparison():
         column_format="l" + "c" * pivot.shape[1],
     ).replace("0.", ".")
 
-    print(r"\setlength{\tabcolsep}{3pt}")
-    print(latex)
-
-def create_heatmap_plot(df, name, metric="ROC-AUC"):
-    g = sns.FacetGrid(df, col="Model", sharex=True, sharey=True, height=2.5, aspect=1.05)
-
-    vmin = df[metric].min()
-    vmax = df[metric].max()
-
-    cbar_ax = g.fig.add_axes([0.86, 0.235, 0.03, 0.625])
-
-    def heatmap(data, **kwargs):
-        pivot = data.pivot(index="Training Dataset", columns="Test Dataset", values=metric)
-        sns.heatmap(pivot, annot=True, square=True, cmap="Blues", linewidths=1,
-                    cbar_kws={'label': metric},
-                    vmin=vmin, vmax=vmax,
-                    cbar_ax=cbar_ax,
-                    **kwargs)
-
-    g.map_dataframe(heatmap)
-    g.set_titles(col_template="{col_name}", weight="bold")
-    plt.tight_layout(rect=[0.0, 0.0, .95, 1])
-
-    plt.savefig(f"plots/{name}.pdf", format="pdf")
-
-    # plt.show()
+    return r"\setlength{\tabcolsep}{3pt}" + "\n" + latex
 
 
-def zero_shot_threshold_comparison():
-    for detector in tqdm(["detect-gpt", "fast-detect-gpt", "intrinsic-dim"],
-                         desc="Computing zero-shot detection thresholds"):
-        all_data = []
-        df = get_predictions(
-            database="../../database/database.db",
-            dataset=None,
-            is_human=None,
-            detector=detector,
-            prompt_mode=None,
-            max_words=-1
-        )
+def compute_dataset_comparison():
+    df = get_predictions(
+        database="../../database/database.db",
+        dataset=None,
+        is_human=None,
+        max_words=-1,
 
-        df = remove_rows_by_condition(df, conditions={
-            "prompt_mode": "task+resource"
-        })
+    )
 
-        # make sure, to load the correct dipper results
-        df = df.apply(map_dipper_to_generative_model, axis=1)
+    df = remove_rows_by_condition(df, conditions={"prompt_mode": "task+resource", "detector": "intrinsic-dim"})
+    df = df.apply(map_dipper_to_generative_model, axis=1)
+    set_label(df)
+    remove_job_id_from_prompt_mode(df)
 
-        # set human label of improve and rewrite-human
-        set_label(df)
+    roc_frames = []
+    metric_rows = []
 
-        for group, sub_df in df.groupby("name"):
-            threshold = get_threshold(sub_df)
+    for (detector_name, dataset), sub_df in df.groupby(["detector", "name"]):
 
-            for group2, sub_sub_df in df.groupby("name"):
-                score = f1_score(~sub_sub_df['is_human'], sub_sub_df['prediction'] > threshold, average="macro")
-
-                all_data.append({
-                    "Training Dataset": group,
-                    "Test Dataset": group2,
-                    "F1-Score": score
+        if detector_name == "roberta":
+            for (model_checkpoint,), sub_sub_df in sub_df.groupby(["model_checkpoint"]):
+                training_dataset = model_checkpoint.split("/")[3]
+                test_dataset = dataset
+                metric_rows.append({
+                    "Model": f"Roberta{training_dataset}",
+                    "Test Dataset": test_dataset,
+                    "auc": get_roc_auc(sub_sub_df),
+                    "tpr": get_tpr_at_fpr(sub_sub_df, target_fpr=0.05),
                 })
 
-        df_all = pd.DataFrame(all_data)
-        df_all.replace({"argument-annotated-essays": "AAE"}, inplace=True)
-        df_all.replace({"persuade": "PERSUADE"}, inplace=True)
+                fpr, tpr, _ = get_roc_curve(sub_df, drop_intermediate=True)
+                roc_frames.append(
+                    pd.DataFrame(
+                        {
+                            "detector": f"Roberta{training_dataset}",
+                            "dataset": dataset,
+                            "fpr": fpr,
+                            "tpr": tpr,
+                        }
+                    )
+                )
+        else:
+            test_dataset = dataset
+            metric_rows.append({
+                "Model": detector_name,
+                "Test Dataset": test_dataset,
+                "auc": get_roc_auc(sub_df),
+                "tpr": get_tpr_at_fpr(sub_df, target_fpr=0.05),
+            })
 
-        create_single_plot(df_all, name=f"domain-generalization-{detector}", metric="F1-Score",
-                           cmap=sns.light_palette("#0072B2", as_cmap=True))
+            fpr, tpr, _ = get_roc_curve(sub_df, drop_intermediate=True)
+            roc_frames.append(
+                pd.DataFrame(
+                    {
+                        "detector": detector_name,
+                        "dataset": test_dataset,
+                        "fpr": fpr,
+                        "tpr": tpr,
+                    }
+                )
+            )
+
+    metrics_df = pd.DataFrame(metric_rows)
+    metrics_df.replace({"argument-annotated-essays": "AAE", "persuade": "PERSUADE"}, inplace=True)
+    metrics_df.replace({"Robertaargument-annotated-essays": "RobertaAAE", "Robertapersuade": "RobertaPERSUADE"}, inplace=True)
+    metrics_df.replace({"detect-gpt": "DetectGPT", "fast-detect-gpt": "FastDetectGPT", "ghostbuster": "Ghostbuster"}, inplace=True)
+
+    roc_df = pd.concat(roc_frames, ignore_index=True) if roc_frames else pd.DataFrame()
+
+    roc_df.replace({"argument-annotated-essays": "AAE", "persuade": "PERSUADE"}, inplace=True)
+    roc_df.replace({"Robertaargument-annotated-essays": "RobertaAAE", "Robertapersuade": "RobertaPERSUADE"}, inplace=True)
+    roc_df.replace({"detect-gpt": "DetectGPT", "fast-detect-gpt": "FastDetectGPT", "ghostbuster": "Ghostbuster"}, inplace=True)
+
+    return roc_df, metrics_df
 
 
-def create_single_plot(df, name, metric="ROC-AUC", cmap="Blues"):
-    pivot = df.pivot(index="Training Dataset", columns="Test Dataset", values=metric)
+def dataset_comparison():
+    roc_df, metrics_df = compute_dataset_comparison()
 
-    fig, ax = plt.subplots(figsize=(6, 4.7))
+    print(_make_latex_table(metrics_df))
 
-    cbar_ax = fig.add_axes([0.78, 0.15, 0.07, 0.8])  # [left, bottom, width, height]
-
-    # Heatmap mit Colorbar in benutzerdefinierter Achse
-    sns.heatmap(pivot, annot=True, square=True, cmap=cmap, linewidths=1,
-                cbar_kws={'label': metric}, ax=ax, cbar_ax=cbar_ax, vmin=.5, vmax=1)
-    # plt.tight_layout(rect=[0.05, 0.0, .8, 1])
-    plt.subplots_adjust(right=0.75, bottom=0.1, top=1)
-    plt.savefig(f"plots/{name}.pdf", format="pdf")
-    plt.show()
+    apply_paper_style()
+    plot_rocs(
+        roc_df,
+        group_col="dataset",
+        facet_col="detector",
+        # group_order=["DetectGPT", "Fast-DetectGPT", "Ghostbuster", "RoBERTa"],
+        # facet_order=["GPT-4o-mini", "Llama-3.3-70b", "Both"],
+        downsample_step=10,
+        xscale="linear",
+        xlim=(0, 1),
+        ylim=(0, 1.02),
+        outfile="plots/dataset_rocs.pdf",
+        figsize=(13 / 2.904, 10 / 2.904),
+        nrows=2, legend_anchor_bottom=0.1
+    )
 
 
 if __name__ == "__main__":
-    roberta_checkpoint_comparison()
-    # zero_shot_threshold_comparison()
+    dataset_comparison()
