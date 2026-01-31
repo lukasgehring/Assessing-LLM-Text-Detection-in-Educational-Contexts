@@ -1,3 +1,5 @@
+import sys
+
 import pandas as pd
 import seaborn as sns
 import matplotlib.colors as mcolors
@@ -9,7 +11,7 @@ from evaluation.utils import (
     remove_rows_by_condition,
     map_dipper_to_generative_model,
     get_roc_auc,
-    get_tpr_at_fpr,
+    get_tpr_at_fpr, set_label,
 )
 
 # --- Style (wie bei dir, nur was wirklich gebraucht wird) ---
@@ -56,13 +58,17 @@ def pretty_detector_name(detector: str) -> str:
     return mapping.get(detector, detector)
 
 # --- Load + filter data ---
-df = get_predictions(max_words=None, prompt_mode="task")
+df = get_predictions(max_words=None, detector="fast-detect-gpt")
+
 df = select_best_roberta_checkpoint(df)
 df = remove_rows_by_condition(df, conditions={
     "detector": ["gpt-zero", "intrinsic-dim"],
     "name": "mixed"
 })
 df = df.apply(map_dipper_to_generative_model, axis=1)
+
+set_label(df)
+
 
 max_words_list = [-1, 50, 100, 150, 200, 250]
 target_fpr = 0.05

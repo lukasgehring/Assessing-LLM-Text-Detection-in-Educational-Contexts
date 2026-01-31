@@ -35,4 +35,4 @@ sns.scatterplot(x="prompt_mode", y="execution_time",
 
 ax.set(yscale="log")
 plt.xticks(rotation=45)
-# plt.show()
+plt.show()
