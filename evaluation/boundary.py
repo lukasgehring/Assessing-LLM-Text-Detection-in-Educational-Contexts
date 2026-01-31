@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 
 from database.interface import get_predictions
@@ -30,111 +29,86 @@ def compute_boundary_comparison(detector=None):
     df = select_best_roberta_checkpoint(df)
     df = remove_rows_by_condition(df, conditions={"prompt_mode": "task+resource", "detector": "intrinsic-dim"})
 
-    desired_order = ["human", "improve-human", "rewrite-human", "summary", "task+summary"]
+    roc_frames = []
+    metric_rows = []
 
-    data = []
-    auc_scores = []
-    for detector, sub_df in df.groupby("detector"):
-        for mode in desired_order:
+    for detector_name, sub_df in df.groupby("detector", sort=False):
+
+        for mode in MODE_ORDER:
+            cur_df = sub_df.copy()
+
             if mode != "human":
-                set_label(sub_df, mode)
+                set_label(cur_df, mode)
 
-            sub_df['is_human'] = sub_df['is_human'] | (sub_df['prompt_mode'] == mode)
+            fpr, tpr, _ = get_roc_curve(cur_df, drop_intermediate=True)
+            mode_key = mode.replace("\n", "")
 
-            fpr, tpr, _ = get_roc_curve(sub_df, drop_intermediate=True)
-            model_label = mode.replace('\n', '')
-
-            num_human = sub_df['is_human'].sum()
-            num_llm = (~sub_df['is_human']).sum()
-
-            sub_df['weights'] = np.where(sub_df['is_human'], 1, num_human / num_llm)
-
-            auc_scores.append({
-                'detector': detector,
-                'roc_auc': get_roc_auc(sub_df),
-                'tpr': get_tpr_at_fpr(sub_df, target_fpr=0.05),
-                'mode': f"{model_label}"
+            metric_rows.append({
+                "detector": detector_name,
+                "mode": mode_key,
+                "roc_auc": get_roc_auc(cur_df),
+                "tpr": get_tpr_at_fpr(cur_df, target_fpr=0.05),
             })
 
-            for x, y in zip(fpr, tpr):
-                data.append({
-                    'detector': detector,
-                    'fpr': x,
-                    'tpr': y,
-                    'mode': f"{model_label}"
-                })
+            roc_frames.append(
+                pd.DataFrame(
+                    {
+                        "detector": detector_name,
+                        "mode": mode_key,
+                        "fpr": fpr,
+                        "tpr": tpr,
+                    }
+                )
+            )
 
-    df = pd.DataFrame(data)
-    df_auc = pd.DataFrame(auc_scores)
+    roc_df = pd.concat(roc_frames, ignore_index=True) if roc_frames else pd.DataFrame()
+    metrics_df = pd.DataFrame(metric_rows)
 
-    return df, df_auc
+    return roc_df, metrics_df
 
 
-def boundary_comparison():
-    df, df_auc = compute_boundary_comparison()
-
+def _make_latex_table(metrics_df):
     table = (
-        df_auc
-        .pivot_table(
+        metrics_df.pivot_table(
             index="mode",
             columns="detector",
-            values=["roc_auc", "tpr"]
+            values=["roc_auc", "tpr"],
         )
+        .swaplevel(0, 1, axis=1)
+        .sort_index(axis=1)
     )
 
-    table = table.swaplevel(0, 1, axis=1).sort_index(axis=1)
-
+    # "roc_auc" -> "AUC", "tpr" -> "TPR"
     table.columns = pd.MultiIndex.from_tuples(
-        [(p, "AUC" if m == "roc_auc" else "TPR") for p, m in table.columns]
+        [(det, "AUC" if metric == "roc_auc" else "TPR") for det, metric in table.columns]
     )
 
-    row_rename_map = {
-        "human": "Human",
-        "improve-human": "Improve-Human",
-        "rewrite-human": "Rewrite-Human",
-        "summary": "Summary",
-        "task+summary": "Task+Summary",
-    }
-    table = table.rename(index=row_rename_map)
+    table = table.rename(index=MODE_LABEL)
+    table = table.rename(columns=DETECTOR_LABEL, level=0)
 
-    col_rename_map = {
-        "detect-gpt": "DetectGPT",
-        "fast-detect-gpt": "Fast-DetectGPT",
-        "ghostbuster": "Ghostbuster",
-        "roberta": "RoBERTa",
-    }
-    table = table.rename(columns=col_rename_map, level=0)
-
-    latex = table.to_latex(
+    return table.to_latex(
         multicolumn=True,
         multicolumn_format="l|",
         column_format="l | cc | cc | cc | cc ",
         float_format=lambda x: f"{x:.3f}".lstrip("0"),
     )
 
-    print(latex)
 
-    df["detector"] = df["detector"].map({
-        "fast-detect-gpt": "Fast-DetectGPT",
-        "detect-gpt": "DetectGPT",
-        "intrinsic-dim": "Intrinsic-Dim",
-        "ghostbuster": "Ghostbuster",
-        "roberta": "RoBERTa",
-    })
+def boundary_comparison():
+    roc_df, metrics_df = compute_boundary_comparison()
 
-    df["mode"] = df["mode"].map({
-        "human": "Human",
-        "improve-human": "Improve-Human",
-        "rewrite-human": "Rewrite-Human",
-        "summary": "Summary",
-        "task+summary": "Task+Summary",
-    })
+    print(_make_latex_table(metrics_df))
+
+    roc_df = roc_df.copy()
+    roc_df["detector"] = roc_df["detector"].map(DETECTOR_LABEL).fillna(roc_df["detector"])
+    roc_df["mode"] = roc_df["mode"].map(MODE_LABEL).fillna(roc_df["mode"])
 
     apply_paper_style()
     plot_rocs(
-        df,
+        roc_df,
         group_col="detector",
         facet_col="mode",
+        group_order=["DetectGPT", "Fast-DetectGPT", "Ghostbuster", "RoBERTa"],
         downsample_step=10,
         xscale="linear",
         xlim=(0, 1),
@@ -145,5 +119,4 @@ def boundary_comparison():
 
 
 if "__main__" == __name__:
-    apply_paper_style()
     boundary_comparison()
