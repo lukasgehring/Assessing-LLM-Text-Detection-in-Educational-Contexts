@@ -31,7 +31,7 @@ def apply_paper_style():
             "legend.fontsize": 5,
             "figure.titlesize": 6,
             "axes.linewidth": 0.8,
-            "lines.linewidth": 1.2,
+            "lines.linewidth": 1.5,
             "lines.markersize": 4,
             "axes.labelpad": 2,
             "axes.titlepad": 2,
@@ -72,7 +72,11 @@ def plot_rocs(
         ncols=None,
         nrows=None,
         panel_size=(3.0, 3.2),
-        legend_anchor_top=1.05
+        legend_anchor_top=1.05,
+        adjust_left=0.06,
+        adjust_right=0.98,
+        adjust_bottom=0.2,
+        adjust_top=0.85,
 ):
     """
     Plottet ROC-Kurven aus einem *long* DataFrame:
@@ -201,10 +205,7 @@ def plot_rocs(
             )
 
     plt.tight_layout()
-    top = 0.85 if (legend and nrows > 1) else 0.85
-    plt.subplots_adjust(left=0.06, right=0.98, bottom=0.2, top=top, wspace=0.2, hspace=0.35)
-
-    # plt.subplots_adjust(left=0.06, right=0.98, bottom=0.32 if legend else 0.12, top=0.9, wspace=0.2)
+    plt.subplots_adjust(left=adjust_left, right=adjust_right, bottom=adjust_bottom, top=adjust_top, wspace=0.2, hspace=0.2)
 
     if outfile:
         plt.savefig(outfile)

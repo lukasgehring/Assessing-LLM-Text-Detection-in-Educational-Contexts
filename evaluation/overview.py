@@ -156,9 +156,13 @@ def detector_overview(target_fpr=0.05):
         xlim=(0, 1),
         ylim=(0, 1.02),
         outfile="plots/contribution_levels_rocs.pdf",
-        figsize=(13 / 2.904, 7.5 / 2.904),
+        figsize=(14 / 2.904, 7 / 2.904),
         nrows=2,
-        legend_anchor_bottom=0.1
+        legend_anchor_top=1.0,
+        adjust_left=.14,
+        adjust_right=.91,
+        adjust_top=0.9,
+        adjust_bottom=0.1,
     )
 
 

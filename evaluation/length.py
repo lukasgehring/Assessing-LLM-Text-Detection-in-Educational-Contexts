@@ -9,7 +9,8 @@ from matplotlib import pyplot as plt
 from matplotlib.pyplot import legend
 
 from database.interface import get_predictions
-from evaluation.plot_roc_curve import apply_paper_style
+from evaluation.metrics import get_roc_curve
+from evaluation.plot_roc_curve import apply_paper_style, plot_rocs
 from evaluation.utils import (
     select_best_roberta_checkpoint,
     remove_rows_by_condition,
@@ -62,6 +63,7 @@ def compute_length_comparison():
 
     rows_auc = []
     rows_tpr = []
+    roc_frames = []
 
     for detector, sub_df in df.groupby("detector"):
         for max_words in max_words_list:
@@ -79,10 +81,23 @@ def compute_length_comparison():
                 "tpr": get_tpr_at_fpr(df_subset, target_fpr=target_fpr),
             })
 
+            fpr, tpr, _ = get_roc_curve(df_subset, drop_intermediate=True)
+            roc_frames.append(
+                pd.DataFrame(
+                    {
+                        "detector": pretty_detector_name(detector),
+                        "number of words": max_words if max_words > 0 else 300,
+                        "fpr": fpr,
+                        "tpr": tpr,
+                    }
+                )
+            )
+
     df_auc = pd.DataFrame(rows_auc)
     df_tpr = pd.DataFrame(rows_tpr)
+    roc_df = pd.concat(roc_frames, ignore_index=True) if roc_frames else pd.DataFrame()
 
-    return df_auc, df_tpr
+    return df_auc, df_tpr, roc_df
 
 
 def plot(df_auc, df_tpr):
@@ -103,7 +118,6 @@ def plot(df_auc, df_tpr):
         markeredgewidth=1,
     )
 
-    ls_map = {g: linestyles[i % len(linestyles)] for i, g in enumerate(group_order)}
     fig, axes = plt.subplots(1, 2, figsize=(14 / 2.9, 3.5 / 2.9), sharex=True, sharey=False)
 
     df_auc.sort_values(["number of words"], inplace=True)
@@ -171,10 +185,26 @@ def plot(df_auc, df_tpr):
 
 if __name__ == "__main__":
     apply_paper_style()
-    # df_auc, df_tpr = compute_length_comparison()
-    # df_auc.to_csv("tmp_1.csv", index=False)
-    # df_tpr.to_csv("tmp_2.csv", index=False)
+    df_auc, df_tpr, roc_df = compute_length_comparison()
 
-    df_auc = pd.read_csv("tmp_1.csv")
-    df_tpr = pd.read_csv("tmp_2.csv")
     plot(df_auc, df_tpr)
+
+    plot_rocs(
+        roc_df,
+        group_col="detector",
+        facet_col="number of words",
+        group_order=["DetectGPT", "Fast-DetectGPT", "Ghostbuster", "RoBERTa"],
+        facet_order=[50, 100, 150, 200, 250, 300],
+        downsample_step=10,
+        xscale="linear",
+        xlim=(0, 1),
+        ylim=(0, 1.02),
+        outfile="plots/length_rocs.pdf",
+        figsize=(14 / 2.904, 7 / 2.904),
+        nrows=2,
+        legend_anchor_top=1.0,
+        adjust_left=.22,
+        adjust_right=.78,
+        adjust_top=0.9,
+        adjust_bottom=0.1,
+    )

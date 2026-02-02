@@ -141,7 +141,12 @@ def model_comparison():
         xlim=(0, 1),
         ylim=(0, 1.02),
         outfile="plots/generative_model_rocs.pdf",
-        figsize=(13 / 2.904, 5 / 2.904),
+        figsize=(14 / 2.904, 3.5 / 2.904),
+        # legend_anchor_top=1.0,
+        adjust_left=.2,
+        adjust_right=.8,
+        # adjust_top=0.9,
+        # adjust_bottom=0.1,
     )
 
 
