@@ -32,3 +32,5 @@ fix_predictions.py
 add_existing_results_to_database.py
 dataset/create_mixed_dataset.py
 remove_aae_from_db.py
+
+*.db

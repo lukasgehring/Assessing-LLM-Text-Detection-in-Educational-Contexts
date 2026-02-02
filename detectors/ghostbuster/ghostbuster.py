@@ -26,6 +26,21 @@ class Ghostbuster(Detector):
         self.sigma = None
         self.trigram_model = None
 
+        self.best_features = open("detectors/ghostbuster/model/features.txt").read().strip().split("\n")
+
+        # Load davinci tokenizer
+        self.enc = tiktoken.encoding_for_model("davinci-002")
+
+        # Load model
+        self.model = pickle.load(open("detectors/ghostbuster/model/model", "rb"))
+        self.mu = pickle.load(open("detectors/ghostbuster/model/mu", "rb"))
+        self.sigma = pickle.load(open("detectors/ghostbuster/model/sigma", "rb"))
+
+        # load nltk brown dataset for trigram training
+        nltk.download('brown')
+
+        self.trigram_model = train_trigram()
+
     def get_predictions(self, data):
         client = OpenAI(api_key=self.args.openai_key)
         predicitons = []
@@ -95,21 +110,6 @@ class Ghostbuster(Detector):
         data = data.head(self.args.n_samples)
 
         self.add_data_hash_to_args(human_data=data[data.is_human == 1], llm_data=data[data.is_human == 0])
-
-        self.best_features = open("detectors/ghostbuster/model/features.txt").read().strip().split("\n")
-
-        # Load davinci tokenizer
-        self.enc = tiktoken.encoding_for_model("davinci-002")
-
-        # Load model
-        self.model = pickle.load(open("detectors/ghostbuster/model/model", "rb"))
-        self.mu = pickle.load(open("detectors/ghostbuster/model/mu", "rb"))
-        self.sigma = pickle.load(open("detectors/ghostbuster/model/sigma", "rb"))
-
-        # load nltk brown dataset for trigram training
-        nltk.download('brown')
-
-        self.trigram_model = train_trigram()
 
         logger.debug(f"Compute predictions of the texts.")
         start = time.time()

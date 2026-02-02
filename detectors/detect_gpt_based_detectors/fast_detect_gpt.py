@@ -9,6 +9,14 @@ from detectors.utils.load_hf import hf_load_pretrained_llm
 class FastDetectGPT(Detector):
     def __init__(self, args):
         super().__init__("fast-detect-gpt", args)
+        # loading huggingface pretrained models. Add correct model_class to load the correct model!
+        self.mask_model, self.mask_tokenizer = hf_load_pretrained_llm(self.args.mask_filling_model_name,
+                                                            cache_dir=self.args.cache_dir, device_map=self.args.device)
+        self.mask_model.eval()
+
+        self.base_model, self.base_tokenizer = hf_load_pretrained_llm(self.args.base_model_name,
+                                                            cache_dir=self.args.cache_dir, device_map=self.args.device)
+        self.base_model.eval()
 
     def get_samples(self, logits, labels):
         assert logits.shape[0] == 1
@@ -46,14 +54,7 @@ class FastDetectGPT(Detector):
         return discrepancy.item()
 
     def run(self, data):
-        # loading huggingface pretrained models. Add correct model_class to load the correct model!
-        mask_model, mask_tokenizer = hf_load_pretrained_llm(self.args.mask_filling_model_name,
-                                                            cache_dir=self.args.cache_dir, device_map=self.args.device)
-        mask_model.eval()
 
-        base_model, base_tokenizer = hf_load_pretrained_llm(self.args.base_model_name,
-                                                            cache_dir=self.args.cache_dir, device_map=self.args.device)
-        base_model.eval()
 
         # strip whitespaces, newlines and keep only samples with <= 512 token
         # data = preprocess_data(data, mask_tokenizer=mask_tokenizer, args=self.args)
@@ -64,18 +65,18 @@ class FastDetectGPT(Detector):
         results = []
         for text in tqdm(data.answer):
             # original text
-            tokenized = base_tokenizer(text, return_tensors="pt", padding=True,
+            tokenized = self.base_tokenizer(text, return_tensors="pt", padding=True,
                                        return_token_type_ids=False).to(self.args.device)
             labels = tokenized.input_ids[:, 1:]
             with torch.no_grad():
-                logits_score = base_model(**tokenized).logits[:, :-1]
+                logits_score = self.base_model(**tokenized).logits[:, :-1]
                 if self.args.mask_filling_model_name == self.args.base_model_name:
                     logits_ref = logits_score
                 else:
-                    tokenized = mask_tokenizer(text, return_tensors="pt", padding=True,
+                    tokenized = self.mask_tokenizer(text, return_tensors="pt", padding=True,
                                                return_token_type_ids=False).to(self.args.device)
                     assert torch.all(tokenized.input_ids[:, 1:] == labels), "Tokenizer is mismatch."
-                    logits_ref = mask_model(**tokenized).logits[:, :-1]
+                    logits_ref = self.mask_model(**tokenized).logits[:, :-1]
                 original_crit = self.get_sampling_discrepancy(logits_ref, logits_score, labels)
             # result
             results.append(original_crit)

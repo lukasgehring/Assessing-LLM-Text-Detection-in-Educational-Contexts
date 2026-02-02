@@ -214,15 +214,6 @@ def perturb_data(data, mask_model, mask_tokenizer, args):
             "perturbed_original": p_answer[i * args.n_perturbation: (i + 1) * args.n_perturbation]
         })
 
-    # unload mask model to save vram
-    logger.debug("Unload mask model")
-
-    mask_model.to("cpu")
-    torch.cuda.empty_cache()
-
-    del mask_model
-    del mask_tokenizer
-
     # make sure, the model is deleted
     time.sleep(1)
 
@@ -232,6 +223,13 @@ def perturb_data(data, mask_model, mask_tokenizer, args):
 class DetectGPT(Detector):
     def __init__(self, args):
         super().__init__("detect-gpt", args)
+
+        # loading huggingface pretrained models. Add correct model_class to load the correct model!
+        self.mask_model, self.mask_tokenizer = hf_load_pretrained_llm(self.args.mask_filling_model_name,
+                                                                      model_class=transformers.AutoModelForSeq2SeqLM,
+                                                                      cache_dir=self.args.cache_dir)
+
+        self.base_model, self.base_tokenizer = hf_load_pretrained_llm(self.args.base_model_name, cache_dir=self.args.cache_dir)
 
     def get_predictions(self, data) -> List:
         predictions = []
@@ -248,24 +246,18 @@ class DetectGPT(Detector):
         return predictions
 
     def run(self, data):
-        # loading huggingface pretrained models. Add correct model_class to load the correct model!
-        mask_model, mask_tokenizer = hf_load_pretrained_llm(self.args.mask_filling_model_name,
-                                                            model_class=transformers.AutoModelForSeq2SeqLM,
-                                                            cache_dir=self.args.cache_dir)
 
         # strip whitespaces, newlines and keep only samples with <= 512 token
-        data = preprocess_data(data, mask_tokenizer=mask_tokenizer, args=self.args)
+        data = preprocess_data(data, mask_tokenizer=self.mask_tokenizer, args=self.args)
 
         self.add_data_hash_to_args(human_data=data[data.is_human == 1], llm_data=data[data.is_human == 0])
 
         # perturb human-written and llm-generated texts
-        perturbed_data = perturb_data(data, mask_model, mask_tokenizer, self.args)
-
-        base_model, base_tokenizer = hf_load_pretrained_llm(self.args.base_model_name, cache_dir=self.args.cache_dir)
+        perturbed_data = perturb_data(data, self.mask_model, self.mask_tokenizer, self.args)
 
         logger.info("Executing DetectGPT")
-        perturbation_results = get_perturbation_results(results=perturbed_data, base_model=base_model,
-                                                        base_tokenizer=base_tokenizer, args=self.args)
+        perturbation_results = get_perturbation_results(results=perturbed_data, base_model=self.base_model,
+                                                        base_tokenizer=self.base_tokenizer, args=self.args)
 
         predictions = self.get_predictions(data=perturbation_results)
 
