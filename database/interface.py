@@ -1,17 +1,36 @@
+import json
+import os
 import sqlite3
 import sys
 import unittest
 import warnings
 from typing import List, Optional
+from uuid import uuid4
 
 import pandas as pd
 from loguru import logger
 
+import database
+
 warnings.simplefilter("once", DeprecationWarning)
+
+
+def init_db(db: str) -> None:
+    with sqlite3.connect(db) as conn:
+        conn.execute("PRAGMA journal_mode = WAL;")
+        # optional sinnvoll:
+        conn.execute("PRAGMA synchronous = NORMAL;")
 
 
 def process_text(text):
     return text.replace("\n", " ")
+
+
+def connect_rw(db: str, timeout_s: int = 60) -> sqlite3.Connection:
+    conn = sqlite3.connect(db, timeout=timeout_s)
+    conn.execute(f"PRAGMA busy_timeout = {timeout_s * 1000};")
+    conn.execute("PRAGMA journal_mode = WAL;")
+    return conn
 
 
 def get_answers_by_id(database: str, ids: List[int]) -> pd.DataFrame:
@@ -22,7 +41,7 @@ def get_answers_by_id(database: str, ids: List[int]) -> pd.DataFrame:
     :return: DataFrame with answers.
     """
     try:
-        with sqlite3.connect(database) as conn:
+        with connect_rw(database) as conn:
             placeholders = ', '.join('?' for _ in ids)
             df = pd.read_sql_query(f"""
                     SELECT a.id, a.is_human, q.question, a.answer
@@ -64,7 +83,7 @@ def get_answers(database: str, dataset: str, is_human: bool, prompt_mode: str = 
 
     # read from database
     try:
-        with sqlite3.connect(database) as conn:
+        with connect_rw(database) as conn:
             df = pd.read_sql_query(f"""
                     SELECT a.id, a.is_human, q.question, a.answer
                     FROM answers AS a
@@ -93,9 +112,10 @@ def get_answers(database: str, dataset: str, is_human: bool, prompt_mode: str = 
 
     return df
 
+
 def get_all_answers(database: str):
     try:
-        with sqlite3.connect(database) as conn:
+        with connect_rw(database) as conn:
             df = pd.read_sql_query(f"""
                     SELECT a.id, a.is_human, a.answer
                     FROM answers AS a
@@ -132,6 +152,7 @@ def add_experiment(database: str, job_id: int, dataset: str, text_author: str, p
     :param model_checkpoint: Checkpoint of the model
     :return: Experiment ID
     """
+
     data = {
         'job_id': job_id,
         'text_author': text_author,
@@ -148,7 +169,8 @@ def add_experiment(database: str, job_id: int, dataset: str, text_author: str, p
     }
 
     try:
-        with sqlite3.connect(database, timeout=60) as connection:
+        with connect_rw(database) as connection:
+
             cursor = connection.cursor()
 
             cursor.execute("SELECT ds.id FROM datasets AS ds WHERE ds.name = ?", (dataset,))
@@ -166,6 +188,7 @@ def add_experiment(database: str, job_id: int, dataset: str, text_author: str, p
             query = f"INSERT INTO experiments ({columns}) VALUES ({placeholders})"
 
             # execute query
+            connection.execute("BEGIN IMMEDIATE;")
             cursor.execute(query, tuple(data.values()))
             experiment_id = cursor.lastrowid
 
@@ -202,8 +225,12 @@ def add_predictions(database: str, experiment_id: int, predictions: List, answer
 
     # write to database
     try:
-        with sqlite3.connect(database, timeout=60) as connection:
-            df.to_sql('predictions', connection, if_exists='append', index=False)
+        with connect_rw(database) as connection:
+
+            connection.execute("BEGIN IMMEDIATE;")
+            df.to_sql('predictions', connection, if_exists='append', index=False, method='multi')
+            connection.commit()
+
         logger.success(f"Successfully added predictions of experiment {experiment_id} to database.")
     except sqlite3.Error as e:
         logger.error(f"The following error occurred when adding predictions to database: {e}")
@@ -213,7 +240,7 @@ def add_predictions(database: str, experiment_id: int, predictions: List, answer
 
 def get_predictions_by_answer_ids(database: str, answer_ids: List[int]) -> pd.DataFrame:
     try:
-        with sqlite3.connect(database) as conn:
+        with connect_rw(database) as conn:
             placeholders = ', '.join('?' for _ in answer_ids)
             df = pd.read_sql_query(f"""
                     SELECT p.id, p.experiment_id, p.answer_id, p.prediction, j.prompt_mode, e.model AS detector, j.model AS generative_model, e.max_words, ds.name, a.is_human, e.model_checkpoint
@@ -260,7 +287,7 @@ def get_predictions(database: str = "../../database/database.db", dataset: Optio
     :return: DataFrame with id, experiment_id, answer_id, prediction, prompt_mode, detector, generative_model, max_words, dataset, is_human
     """
     try:
-        with sqlite3.connect(database) as conn:
+        with connect_rw(database) as conn:
             df = pd.read_sql(
                 f"""
                         SELECT p.id, p.experiment_id, p.answer_id, p.prediction, e.prompt_mode, e.model AS detector, e.text_author AS generative_model, e.max_words, ds.name, a.is_human, e.model_checkpoint, q.id as question_id
@@ -334,7 +361,9 @@ def get_predictions(database: str = "../../database/database.db", dataset: Optio
 
 def add_execution_time(database: str, experiment_id: int, execution_time: int) -> None:
     try:
-        with sqlite3.connect(database) as conn:
+        with connect_rw(database) as conn:
+            conn.execute("BEGIN IMMEDIATE;")
+
             cursor = conn.cursor()
             cursor.execute("UPDATE experiments SET execution_time = ? WHERE id = ?", (execution_time, experiment_id))
             conn.commit()
@@ -347,7 +376,7 @@ def add_execution_time(database: str, experiment_id: int, execution_time: int) -
 
 def get_human_meta_data(database: str, answer_ids: pd.Series):
     try:
-        with sqlite3.connect(database) as conn:
+        with connect_rw(database) as conn:
             ids = answer_ids.tolist()
             query = f"SELECT * FROM human_meta WHERE answer_id IN ({','.join('?' * len(ids))})"
 
@@ -361,7 +390,7 @@ def get_human_meta_data(database: str, answer_ids: pd.Series):
 
 def get_full_table(database: str, table_name: str) -> pd.DataFrame:
     try:
-        with sqlite3.connect(database) as conn:
+        with connect_rw(database) as conn:
             df = pd.read_sql_query(f"SELECT * FROM {table_name}", conn)
     except sqlite3.Error as e:
         logger.error(f"The following error occurred when reading table {table_name} from database: {e}")
@@ -371,7 +400,7 @@ def get_full_table(database: str, table_name: str) -> pd.DataFrame:
 
 def add_question_metadata_to_df(database: str, df: pd.DataFrame) -> pd.DataFrame:
     try:
-        with sqlite3.connect(database) as conn:
+        with connect_rw(database) as conn:
             ids = df.question_id.tolist()
             query = f"SELECT id as question_id, module, discipline, discipline_group, course FROM questions WHERE id IN ({','.join('?' * len(ids))})"
 
