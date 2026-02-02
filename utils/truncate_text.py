@@ -15,20 +15,22 @@ def apply_max_words(df: pd.DataFrame, args: Namespace) -> pd.DataFrame:
     :return: DataFrame with truncated answers
     """
 
+    df_cut = df.copy()
+
     # load nltk for sentence splitting
     nltk.download('punkt_tab')
     fn_truncate_text = partial(truncate_text, max_words=args.max_words, cut_sentences=args.cut_sentences)
-    df['answer'] = df['answer'].apply(fn_truncate_text)
+    df_cut['answer'] = df_cut['answer'].apply(fn_truncate_text)
 
-    num_rows_with_nan = df.isna().any(axis=1).sum()
-    df.dropna(inplace=True)
+    num_rows_with_nan = df_cut.isna().any(axis=1).sum()
+    df_cut.dropna(inplace=True)
     if num_rows_with_nan > 0:
         logger.debug(
             f"Dropped {num_rows_with_nan} samples due to insufficient number of words in the first sentence.")
 
     logger.info(f"Essays truncated to a maximum of {args.max_words} words.")
 
-    return df
+    return df_cut
 
 
 def truncate_text(text: str, max_words: int, cut_sentences: bool = False) -> str:
