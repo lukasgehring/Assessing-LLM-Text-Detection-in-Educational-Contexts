@@ -114,7 +114,7 @@ def boundary_comparison():
         xlim=(0, 1),
         ylim=(0, 1.02),
         outfile="plots/boundary_rocs.pdf",
-        figsize=(14 / 2.904, 3.5 / 2.904)
+        figsize=(14 / 2.904, 3.3 / 2.904)
     )
 
 

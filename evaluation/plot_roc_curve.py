@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 import matplotlib.colors as mcolors
+from matplotlib.ticker import AutoMinorLocator
 
 
 def pastel_color(color, amount=0.5):
@@ -20,12 +21,14 @@ def apply_paper_style():
         style="ticks",
         font_scale=1,
         rc={
+            "font.sans-serif": "Helvetica",
+            "font.family": "serif",
             "font.size": 6,
             "axes.titlesize": 6,
-            "axes.labelsize": 5,
-            "xtick.labelsize": 5,
-            "ytick.labelsize": 5,
-            "legend.fontsize": 6,
+            "axes.labelsize": 6,
+            "xtick.labelsize": 6,
+            "ytick.labelsize": 6,
+            "legend.fontsize": 5,
             "figure.titlesize": 6,
             "axes.linewidth": 0.8,
             "lines.linewidth": 1.2,
@@ -34,8 +37,12 @@ def apply_paper_style():
             "axes.titlepad": 2,
             "xtick.major.width": 0.6,
             "ytick.major.width": 0.6,
-            "xtick.major.size": 2,
-            "ytick.major.size": 2,
+            "xtick.major.size": 1,
+            "ytick.major.size": 1,
+            "xtick.minor.size": .5,
+            "ytick.minor.size": .5,
+            "xtick.minor.width": 0.6,
+            "ytick.minor.width": 0.6,
             "xtick.major.pad": 1,
             "ytick.major.pad": 1,
             "axes.grid": False,
@@ -65,7 +72,7 @@ def plot_rocs(
         ncols=None,
         nrows=None,
         panel_size=(3.0, 3.2),
-        legend_anchor_bottom=0.15
+        legend_anchor_top=1.05
 ):
     """
     Plottet ROC-Kurven aus einem *long* DataFrame:
@@ -151,12 +158,17 @@ def plot_rocs(
         ax.set_xlim(*xlim)
         ax.set_ylim(*ylim)
         ax.set_xscale(xscale)
+        ax.set_aspect("equal", adjustable="box")
 
         ax.spines["bottom"].set_position(("outward", .5))
         ax.spines["left"].set_position(("outward", .5))
 
+        ax.xaxis.set_minor_locator(AutoMinorLocator(2))
+        ax.yaxis.set_minor_locator(AutoMinorLocator(2))
+
         if grid:
-            ax.grid(True, which="major", linestyle="-", linewidth=0.75, alpha=0.25, zorder=0)
+            ax.grid(True, which="major", linestyle="-", linewidth=0.75, alpha=0.3, zorder=0)
+            ax.grid(True, which="minor", linestyle="--", linewidth=0.5, alpha=0.2, zorder=0)
 
         ax.spines["right"].set_visible(False)
         ax.spines["top"].set_visible(False)
@@ -183,14 +195,14 @@ def plot_rocs(
             fig.legend(
                 handles, labels,
                 loc="upper center",
-                bbox_to_anchor=(0.5, legend_anchor_bottom),
+                bbox_to_anchor=(0.5, legend_anchor_top),
                 ncol=min(legend_ncol, len(labels)),
                 frameon=False,
             )
 
     plt.tight_layout()
-    bottom = 0.18 if (legend and nrows > 1) else (0.32 if legend else 0.12)
-    plt.subplots_adjust(left=0.06, right=0.98, bottom=bottom, top=0.9, wspace=0.2, hspace=0.35)
+    top = 0.85 if (legend and nrows > 1) else 0.85
+    plt.subplots_adjust(left=0.06, right=0.98, bottom=0.2, top=top, wspace=0.2, hspace=0.35)
 
     # plt.subplots_adjust(left=0.06, right=0.98, bottom=0.32 if legend else 0.12, top=0.9, wspace=0.2)
 
